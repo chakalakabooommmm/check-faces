@@ -1,1 +1,1 @@
-# check-faces
+# photo-gallery
