@@ -318,7 +318,7 @@
       transition: all 0.25s;
     }
 
-    .face-guide.holding {
+    .face-guide.ing {
       border-color: #eab308; /* Amarelo: posicionado, aguardando parar de tremer */
       border-style: solid;
     }
@@ -847,7 +847,7 @@
           if (isCorrectAngle) {
             if (isMoving) {
               // Ângulo certo, mas a pessoa ainda está se movendo
-              faceGuide.className = 'face-guide holding';
+              faceGuide.className = 'face-guide ing';
               scanHint.textContent = "Fique imóvel...";
               stableFrames = Math.max(0, stableFrames - 1);
             } else {
@@ -919,7 +919,7 @@
 
       const foundIds = new Set();
       // Tolerância calibrada para fotos nítidas
-      const DISTANCE_THRESHOLD = 0.52; 
+      const DISTANCE_THRESHOLD = 0.58; 
 
       allPhotos.forEach(photo => {
         const photoDescriptors = galleryDescriptors.get(photo.id) || [];
