@@ -8,8 +8,7 @@ const EVENTOS = [
     data: '15 de Outubro, 2026',
     capa: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
     folderId: '1Um5fjJByddEjkCbIYfyaTa4i6DlVB_dr'
-  }
-];
+  },
 
 {
     id: 'teste-3',
