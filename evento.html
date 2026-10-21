@@ -281,4 +281,791 @@
       overflow: hidden;
       background: #000;
       margin: 12px 0 16px 0;
-      border: 2px solid #3
+      border: 2px solid #3f3f46;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    /* MÁSCARA PRETA COM CONTORNO VERMELHO */
+    .face-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      height: 275px;
+      border-radius: 50%;
+      border: 3.5px solid #ef4444;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .face-guide.holding {
+      border-color: #f87171;
+    }
+
+    .face-guide.aligned {
+      border-color: #10b981;
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
+    /* CONTAGEM CENTRAL */
+    .camera-countdown {
+      font-size: 4.5rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.8);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+      user-select: none;
+    }
+
+    .camera-countdown.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .camera-flash {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s ease-out;
+      z-index: 25;
+    }
+    .camera-flash.flash-active {
+      opacity: 0.9;
+    }
+
+    .scan-instruction {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      min-height: 28px;
+      margin-bottom: 4px;
+    }
+
+    .scan-hint {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      min-height: 20px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    /* Lightbox */
+    .lightbox-content {
+      max-width: 85vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
+    }
+
+    .lightbox-actions {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .photo-counter { color: #a1a1aa; font-size: 0.95rem; }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(39, 39, 42, 0.8);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 2rem;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      z-index: 1010;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover { background: #dc2626; transform: translateY(-50%) scale(1.1); }
+    .nav-btn-prev { left: 25px; }
+    .nav-btn-next { right: 25px; }
+
+    .btn-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(39, 39, 42, 0.85);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1015;
+    }
+    .btn-close:hover { background: #b91c1c; }
+
+    @media (max-width: 600px) {
+      .nav-btn { width: 42px; height: 42px; font-size: 1.4rem; }
+      .nav-btn-prev { left: 8px; }
+      .nav-btn-next { right: 8px; }
+      .btn-close { top: 10px; right: 10px; width: 36px; height: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="./index.html" class="btn-back">← Voltar para Todos os Eventos</a>
+    <h1 id="eventTitle">Carregando Evento...</h1>
+    <p class="event-meta" id="eventDate"></p>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="btnScanFace" disabled>
+        📷 Escanear meu Rosto (3 Passos)
+      </button>
+      <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
+        Mostrar Todas as Fotos
+      </button>
+      <button class="btn btn-success" id="btnDownloadAllMatched" style="display: none;">
+        📦 Baixar Todas as Minhas Fotos (.zip)
+      </button>
+    </div>
+    <p id="statusMessage">Conectando ao Google Drive...</p>
+  </header>
+
+  <div class="tabs-wrapper">
+    <div class="tabs-bar" id="tabsBar"></div>
+  </div>
+
+  <main class="gallery-grid" id="galleryGrid"></main>
+  <div id="scrollLoader">Carregando mais fotos...</div>
+
+  <!-- MODAL DE CÂMERA BIOMÉTRICA (CORRIGIDA) -->
+  <div class="modal-overlay" id="cameraModal">
+    <div class="modal-content">
+      <button class="btn-close" id="btnCloseCamera">&times;</button>
+      
+      <div class="scan-instruction" id="scanInstruction">1. Olhe de frente</div>
+      <div class="scan-hint" id="scanHint">Centralize o rosto no círculo e pare</div>
+
+      <!-- Indicadores dos 3 Passos Guiados -->
+      <div class="scan-steps">
+        <span class="step-pill active" id="pillFront">1. Frente</span>
+        <span class="step-pill" id="pillSide">2. Lado</span>
+        <span class="step-pill" id="pillUp">3. Queixo</span>
+      </div>
+
+      <div class="video-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <div class="camera-flash" id="cameraFlash"></div>
+        
+        <div class="face-guide" id="faceGuide">
+          <div class="camera-countdown" id="cameraCountdown">3</div>
+        </div>
+      </div>
+
+      <p style="font-size: 0.78rem; color: #71717a;">
+        Segure a cabeça firme no ângulo indicado para a contagem disparar.
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal Lightbox -->
+  <div class="modal-overlay" id="lightboxModal">
+    <button class="btn-close" id="btnCloseLightbox">&times;</button>
+    <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
+      <div class="lightbox-actions">
+        <a id="btnDownload" class="btn btn-primary" href="" target="_blank" download>⬇ Baixar em Alta Resolução</a>
+        <span class="photo-counter" id="photoCounter"></span>
+      </div>
+    </div>
+    <button class="nav-btn nav-btn-next" id="btnNextPhoto">&#10095;</button>
+  </div>
+
+  <script src="./eventos.js?v=novo"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
+
+    document.getElementById('eventTitle').textContent = eventoAtual.nome;
+    document.getElementById('eventDate').textContent = eventoAtual.data;
+    document.title = `${eventoAtual.nome} - Galeria`;
+
+    /* ESTADO DA APLICAÇÃO */
+    let FOLDERS = [];
+    const BATCH_SIZE = 30;
+    let renderedCount = 0;
+    let allPhotos = [];
+    let currentFilteredPhotos = [];
+    let currentPhotoIndex = 0;
+    const galleryDescriptors = new Map();
+    let activeTabId = '';
+    let matchedPhotoIds = null;
+    let stream = null;
+    let isScanningActive = false;
+
+    const tabsBar = document.getElementById('tabsBar');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const scrollLoader = document.getElementById('scrollLoader');
+    const statusMessage = document.getElementById('statusMessage');
+    const btnScanFace = document.getElementById('btnScanFace');
+    const btnResetFilter = document.getElementById('btnResetFilter');
+    const btnDownloadAllMatched = document.getElementById('btnDownloadAllMatched');
+
+    // Câmera & Scanner
+    const cameraModal = document.getElementById('cameraModal');
+    const webcam = document.getElementById('webcam');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const faceGuide = document.getElementById('faceGuide');
+    const cameraCountdown = document.getElementById('cameraCountdown');
+    const cameraFlash = document.getElementById('cameraFlash');
+    const scanInstruction = document.getElementById('scanInstruction');
+    const scanHint = document.getElementById('scanHint');
+    const pillFront = document.getElementById('pillFront');
+    const pillSide = document.getElementById('pillSide');
+    const pillUp = document.getElementById('pillUp');
+
+    // Lightbox
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnPrevPhoto = document.getElementById('btnPrevPhoto');
+    const btnNextPhoto = document.getElementById('btnNextPhoto');
+    const photoCounter = document.getElementById('photoCounter');
+
+    // 1. Descobrir subpastas
+    async function loadEventGallery() {
+      statusMessage.textContent = 'Identificando galerias no Google Drive...';
+
+      try {
+        const queryPastas = encodeURIComponent(`'${eventoAtual.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+        const urlPastas = `https://www.googleapis.com/drive/v3/files?q=${queryPastas}&fields=files(id,name)&key=${GOOGLE_API_KEY}`;
+        
+        const resPastas = await fetch(urlPastas);
+        const dataPastas = await resPastas.json();
+        let subpastas = dataPastas.files || [];
+
+        if (subpastas.length === 0) {
+          subpastas = [{ id: eventoAtual.folderId, name: 'Todas as Fotos' }];
+        }
+
+        allPhotos = [];
+        for (const pasta of subpastas) {
+          statusMessage.textContent = `Carregando galeria: ${pasta.name}...`;
+          const fotosDaPasta = await fetchPhotosFromSubfolder(pasta.id, pasta.name);
+          allPhotos.push(...fotosDaPasta);
+        }
+
+        if (allPhotos.length === 0) {
+          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
+          return false;
+        }
+
+        FOLDERS = subpastas;
+        activeTabId = FOLDERS[0].id;
+
+        renderTabs();
+        setupGalleryView();
+        return true;
+      } catch (err) {
+        console.error(err);
+        statusMessage.textContent = 'Erro ao carregar fotos do Drive.';
+        return false;
+      }
+    }
+
+    async function fetchPhotosFromSubfolder(folderId, folderName) {
+      const query = encodeURIComponent(`'${folderId}' in parents and mimeType contains 'image/' and trashed = false`);
+      let allFiles = [];
+      let pageToken = '';
+
+      try {
+        do {
+          const pageParam = pageToken ? `&pageToken=${pageToken}` : '';
+          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.files) allFiles.push(...data.files);
+          pageToken = data.nextPageToken;
+        } while (pageToken);
+
+        return allFiles.map(file => ({
+          id: file.id,
+          name: file.name,
+          folderId: folderId,
+          folderName: folderName,
+          thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
+          fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`,
+          downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
+        }));
+      } catch (e) {
+        return [];
+      }
+    }
+
+    // 2. Abas e Renderização
+    function renderTabs() {
+      tabsBar.innerHTML = '';
+      if (matchedPhotoIds !== null) {
+        const matchedBtn = document.createElement('button');
+        matchedBtn.className = `tab-btn tab-matched ${activeTabId === 'matched' ? 'active' : ''}`;
+        matchedBtn.innerHTML = `✨ Suas Fotos (${matchedPhotoIds.size})`;
+        matchedBtn.onclick = () => { activeTabId = 'matched'; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(matchedBtn);
+      }
+
+      FOLDERS.forEach(folder => {
+        const total = allPhotos.filter(p => {
+          const inFolder = p.folderId === folder.id;
+          return matchedPhotoIds ? (inFolder && matchedPhotoIds.has(p.id)) : inFolder;
+        }).length;
+
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${activeTabId === folder.id ? 'active' : ''}`;
+        btn.innerHTML = `${folder.name} <span>(${total})</span>`;
+        btn.onclick = () => { activeTabId = folder.id; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(btn);
+      });
+    }
+
+    function setupGalleryView() {
+      galleryGrid.innerHTML = '';
+      renderedCount = 0;
+
+      if (activeTabId === 'matched') {
+        currentFilteredPhotos = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      } else {
+        currentFilteredPhotos = allPhotos.filter(p => {
+          const match = p.folderId === activeTabId;
+          return matchedPhotoIds ? (match && matchedPhotoIds.has(p.id)) : match;
+        });
+      }
+
+      if (currentFilteredPhotos.length === 0) {
+        galleryGrid.innerHTML = '<div class="empty-message">Nenhuma foto para exibir nesta aba.</div>';
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      renderNextBatch();
+    }
+
+    function renderNextBatch() {
+      if (renderedCount >= currentFilteredPhotos.length) {
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      const nextBatch = currentFilteredPhotos.slice(renderedCount, renderedCount + BATCH_SIZE);
+      nextBatch.forEach((photo, i) => {
+        const globalIndex = renderedCount + i;
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+          <img src="${photo.thumbUrl}" alt="${photo.name}" loading="lazy">
+          ${activeTabId === 'matched' ? `<span class="folder-badge">${photo.folderName}</span>` : ''}
+        `;
+        item.onclick = () => openLightbox(globalIndex);
+        galleryGrid.appendChild(item);
+      });
+
+      renderedCount += nextBatch.length;
+      scrollLoader.style.display = renderedCount < currentFilteredPhotos.length ? 'block' : 'none';
+    }
+
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+        renderNextBatch();
+      }
+    });
+
+    // 3. Lightbox
+    function openLightbox(index) {
+      currentPhotoIndex = index;
+      updateLightboxDisplay();
+      lightboxModal.style.display = 'flex';
+    }
+
+    function updateLightboxDisplay() {
+      if (currentFilteredPhotos.length === 0) return;
+      const photo = currentFilteredPhotos[currentPhotoIndex];
+      lightboxImg.src = photo.fullUrl;
+      btnDownload.href = photo.downloadUrl;
+      photoCounter.textContent = `${currentPhotoIndex + 1} de ${currentFilteredPhotos.length}`;
+    }
+
+    btnNextPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex + 1) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnPrevPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnCloseLightbox.onclick = () => { lightboxModal.style.display = 'none'; lightboxImg.src = ''; };
+
+    window.addEventListener('keydown', (e) => {
+      if (lightboxModal.style.display === 'flex') {
+        if (e.key === 'ArrowRight') btnNextPhoto.click();
+        if (e.key === 'ArrowLeft') btnPrevPhoto.click();
+        if (e.key === 'Escape') btnCloseLightbox.click();
+      }
+    });
+
+    // 4. Carregar IA
+    async function initFaceAPI() {
+      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+
+        const res = await fetch('./faces.json?t=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          const precomputedFaces = await res.json();
+          for (const [photoId, descriptors] of Object.entries(precomputedFaces)) {
+            galleryDescriptors.set(photoId, descriptors.map(d => new Float32Array(d)));
+          }
+        }
+
+        statusMessage.textContent = 'Pronto! Você pode ver as fotos ou escanear seu rosto.';
+        btnScanFace.disabled = false;
+      } catch (err) {
+        statusMessage.textContent = 'Pronto! Galeria carregada.';
+        btnScanFace.disabled = false;
+      }
+    }
+
+    // 5. CÂMERA BIOMÉTRICA (3 PASSOS COM MATEMÁTICA CORRIGIDA)
+    btnScanFace.onclick = async () => {
+      cameraModal.style.display = 'flex';
+      resetPills();
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+        });
+        webcam.srcObject = stream;
+        isScanningActive = true;
+        
+        webcam.onloadedmetadata = () => {
+          startOption2CaptureSequence();
+        };
+      } catch (err) {
+        alert('Permissão de câmera negada.');
+        cameraModal.style.display = 'none';
+      }
+    };
+
+    function closeCamera() {
+      isScanningActive = false;
+      cameraModal.style.display = 'none';
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    }
+
+    btnCloseCamera.onclick = closeCamera;
+
+    function resetPills() {
+      pillFront.className = 'step-pill active';
+      pillSide.className = 'step-pill';
+      pillUp.className = 'step-pill';
+      faceGuide.className = 'face-guide';
+      cameraCountdown.className = 'camera-countdown';
+      cameraCountdown.textContent = '';
+    }
+
+    function getHeadPose(landmarks) {
+      const noseTip = landmarks.positions[30];
+      const noseBridge = landmarks.positions[27];
+      const leftJaw = landmarks.positions[0];
+      const rightJaw = landmarks.positions[16];
+      const chin = landmarks.positions[8];
+
+      // Yaw (horizontal)
+      const distLeft = noseTip.x - leftJaw.x;
+      const distRight = rightJaw.x - noseTip.x;
+      const yaw = (distLeft - distRight) / (distLeft + distRight);
+
+      // Pitch vertical (queixo ao nariz vs nariz aos olhos)
+      const upperFace = noseTip.y - noseBridge.y;
+      const lowerFace = chin.y - noseTip.y;
+      const pitchRatio = lowerFace / (upperFace || 1);
+
+      return { yaw, pitchRatio, noseTip };
+    }
+
+    function triggerFlashEffect() {
+      cameraFlash.classList.add('flash-active');
+      setTimeout(() => {
+        cameraFlash.classList.remove('flash-active');
+      }, 150);
+    }
+
+    async function startOption2CaptureSequence() {
+      const capturedDescriptors = [];
+      let currentStage = 'FRONT'; // 'FRONT' -> 'SIDE' -> 'UP' -> 'DONE'
+      let stableFrames = 0;
+      const REQUIRED_STABLE_FRAMES = 8;
+      let prevNose = null;
+
+      scanInstruction.textContent = "1. Olhe de frente";
+      scanHint.textContent = "Centralize o rosto no círculo e pare";
+
+      while (isScanningActive && currentStage !== 'DONE') {
+        const detection = await faceapi.detectSingleFace(
+          webcam, 
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+          const { yaw, pitchRatio, noseTip } = getHeadPose(detection.landmarks);
+
+          let isMoving = false;
+          if (prevNose) {
+            const movement = Math.hypot(noseTip.x - prevNose.x, noseTip.y - prevNose.y);
+            if (movement > 3.5) isMoving = true;
+          }
+          prevNose = { x: noseTip.x, y: noseTip.y };
+
+          let isCorrectAngle = false;
+
+          if (currentStage === 'FRONT') {
+            // De frente: centralizado horizontal e altura neutra
+            isCorrectAngle = Math.abs(yaw) < 0.16 && pitchRatio >= 1.15 && pitchRatio <= 1.62;
+          } else if (currentStage === 'SIDE') {
+            // De lado: virado cerca de 25°
+            isCorrectAngle = yaw > 0.20;
+          } else if (currentStage === 'UP') {
+            // ⚠️ CORREÇÃO: Erguendo o queixo para CIMA, a proporção AUMENTA para mais de 1.65!
+            isCorrectAngle = pitchRatio > 1.65 && Math.abs(yaw) < 0.20;
+          }
+
+          if (isCorrectAngle) {
+            if (isMoving) {
+              faceGuide.className = 'face-guide holding';
+              scanHint.textContent = "Fique imóvel...";
+              cameraCountdown.className = 'camera-countdown';
+              stableFrames = Math.max(0, stableFrames - 1);
+            } else {
+              stableFrames++;
+              faceGuide.className = 'face-guide holding';
+
+              cameraCountdown.className = 'camera-countdown active';
+              if (stableFrames <= 2) {
+                cameraCountdown.textContent = '3';
+              } else if (stableFrames <= 5) {
+                cameraCountdown.textContent = '2';
+              } else if (stableFrames <= 7) {
+                cameraCountdown.textContent = '1';
+              }
+
+              if (stableFrames >= REQUIRED_STABLE_FRAMES) {
+                faceGuide.className = 'face-guide aligned';
+                cameraCountdown.textContent = '📸';
+                triggerFlashEffect();
+                capturedDescriptors.push(detection.descriptor);
+                stableFrames = 0;
+                prevNose = null;
+
+                if (currentStage === 'FRONT') {
+                  pillFront.className = 'step-pill completed';
+                  pillSide.className = 'step-pill active';
+                  currentStage = 'SIDE';
+                  scanInstruction.textContent = "2. Vire o rosto de lado";
+                  scanHint.textContent = "Gire cerca de 30° para o lado e pare";
+                  cameraCountdown.className = 'camera-countdown';
+                  faceGuide.className = 'face-guide';
+                  await new Promise(r => setTimeout(r, 1200));
+                } else if (currentStage === 'SIDE') {
+                  pillSide.className = 'step-pill completed';
+                  pillUp.className = 'step-pill active';
+                  currentStage = 'UP';
+                  scanInstruction.textContent = "3. Erga levemente o queixo";
+                  scanHint.textContent = "Olhe suavemente para CIMA e pare";
+                  cameraCountdown.className = 'camera-countdown';
+                  faceGuide.className = 'face-guide';
+                  await new Promise(r => setTimeout(r, 1200));
+                } else if (currentStage === 'UP') {
+                  pillUp.className = 'step-pill completed';
+                  currentStage = 'DONE';
+                }
+              }
+            }
+          } else {
+            stableFrames = 0;
+            faceGuide.className = 'face-guide';
+            cameraCountdown.className = 'camera-countdown';
+            if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo";
+            if (currentStage === 'SIDE') scanHint.textContent = "Vire mais o rosto de lado";
+            if (currentStage === 'UP') scanHint.textContent = "Erga mais o queixo para cima";
+          }
+
+        } else {
+          faceGuide.className = 'face-guide';
+          cameraCountdown.className = 'camera-countdown';
+          stableFrames = 0;
+          prevNose = null;
+        }
+
+        await new Promise(r => setTimeout(r, 90));
+      }
+
+      if (currentStage === 'DONE') {
+        scanInstruction.textContent = "✨ 3 Fotos Nítidas Capturadas!";
+        scanHint.textContent = "Cruzando biometria com as fotos da galeria...";
+        cameraCountdown.textContent = '✔';
+        await new Promise(r => setTimeout(r, 500));
+        
+        closeCamera();
+        processMatchingWithMultiDescriptors(capturedDescriptors);
+      }
+    }
+
+    // 6. VALIDAÇÃO BIOMÉTRICA CIRÚRGICA (RÉGUA EM 0.515)
+    function processMatchingWithMultiDescriptors(userDescriptors) {
+      statusMessage.textContent = 'Comparando biometria com as fotos...';
+
+      const foundIds = new Set();
+      const DISTANCE_THRESHOLD = 0.515; 
+
+      console.clear();
+      console.log('====================================================');
+      console.log('📊 AUDITORIA OPÇÃO 2 CORRIGIDA (RÉGUA: 0.515)');
+      console.log('====================================================');
+
+      allPhotos.forEach(photo => {
+        const photoDescriptors = galleryDescriptors.get(photo.id) || [];
+        
+        let menorDistancia = 999;
+        let dFrenteMin = 999;
+        let dLadoMin = 999;
+        let dCimaMin = 999;
+
+        photoDescriptors.forEach(pDesc => {
+          const dFront = faceapi.euclideanDistance(userDescriptors[0], pDesc);
+          const dSide  = userDescriptors[1] ? faceapi.euclideanDistance(userDescriptors[1], pDesc) : 999;
+          const dUp    = userDescriptors[2] ? faceapi.euclideanDistance(userDescriptors[2], pDesc) : 999;
+
+          if (dFront < dFrenteMin) dFrenteMin = dFront;
+          if (dSide < dLadoMin) dLadoMin = dSide;
+          if (dUp < dCimaMin) dCimaMin = dUp;
+
+          const minD = Math.min(dFront, dSide, dUp);
+          if (minD < menorDistancia) menorDistancia = minD;
+        });
+
+        const isMatch = menorDistancia <= DISTANCE_THRESHOLD;
+
+        if (menorDistancia < 0.65) {
+          console.log(
+            `📸 ${photo.name} | Menor: ${menorDistancia.toFixed(3)} ` +
+            `(Frente: ${dFrenteMin.toFixed(3)} | Lado: ${dLadoMin.toFixed(3)} | Cima: ${dCimaMin.toFixed(3)}) ` +
+            `-> ${isMatch ? '✅ APROVADA' : '❌ REJEITADA'}`
+          );
+        }
+
+        if (isMatch) {
+          foundIds.add(photo.id);
+        }
+      });
+
+      console.log('====================================================');
+
+      if (foundIds.size > 0) {
+        matchedPhotoIds = foundIds;
+        activeTabId = 'matched';
+        renderTabs();
+        setupGalleryView();
+        statusMessage.textContent = `Encontramos ${foundIds.size} foto(s) onde você aparece!`;
+        btnResetFilter.style.display = 'inline-block';
+        btnDownloadAllMatched.style.display = 'inline-block';
+        btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
+      } else {
+        alert('Não encontramos você nas fotos deste evento. Se estava de óculos nas fotos, tente escanear com os óculos.');
+        statusMessage.textContent = 'Nenhuma foto encontrada para este rosto.';
+      }
+    }
+
+    // 7. Download ZIP
+    btnDownloadAllMatched.onclick = async () => {
+      if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
+      const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      btnDownloadAllMatched.disabled = true;
+
+      try {
+        const zip = new JSZip();
+        let i = 0;
+        for (const photo of photosToDownload) {
+          i++;
+          btnDownloadAllMatched.textContent = `Baixando ${i}/${photosToDownload.length}...`;
+          const res = await fetch(photo.fullUrl);
+          const blob = await res.blob();
+          zip.file(`${photo.folderName}_${photo.name}.jpg`, blob);
+        }
+        btnDownloadAllMatched.textContent = 'Compactando .zip...';
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = `fotos_${eventoAtual.id}.zip`;
+        a.click();
+        btnDownloadAllMatched.textContent = '✔ Download Concluído!';
+        setTimeout(() => {
+          btnDownloadAllMatched.disabled = false;
+          btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${photosToDownload.length})`;
+        }, 3000);
+      } catch (e) {
+        alert('Erro ao compactar fotos.');
+        btnDownloadAllMatched.disabled = false;
+      }
+    };
+
+    btnResetFilter.onclick = () => {
+      matchedPhotoIds = null;
+      activeTabId = FOLDERS[0].id;
+      btnResetFilter.style.display = 'none';
+      btnDownloadAllMatched.style.display = 'none';
+      renderTabs();
+      setupGalleryView();
+      statusMessage.textContent = 'Exibindo todas as fotos.';
+    };
+
+    (async () => {
+      const ok = await loadEventGallery();
+      if (ok) await initFaceAPI();
+    })();
+  </script>
+</body>
+</html>
