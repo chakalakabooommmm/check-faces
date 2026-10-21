@@ -881,7 +881,7 @@
 
       const foundIds = new Set();
       // 0.58 com 3 ângulos dá precisão cirúrgica sem falsos positivos
-      const DISTANCE_THRESHOLD = 0.52;
+      const DISTANCE_THRESHOLD = 0.48;
 
       allPhotos.forEach(photo => {
         const photoDescriptors = galleryDescriptors.get(photo.id) || [];
