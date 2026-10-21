@@ -10,6 +10,13 @@ const EVENTOS = [
     folderId: '1Um5fjJByddEjkCbIYfyaTa4i6DlVB_dr'
   },
   {
+    id: 'teste-2',
+    nome: 'Teste 2',
+    data: '1 de Outubro, 2026',
+    capa: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    folderId: '1zWX21qeUDzi3c0iELH0jnmTqcsF7vOnA'
+  },
+  {
     id: 'teste-3',
     nome: 'Teste 3',
     data: '22 de Outubro, 2026',
