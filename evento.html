@@ -5,63 +5,334 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galeria do Evento</title>
   
+  <!-- Face-API.js e JSZip -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-    header { max-width: 1200px; margin: 0 auto 25px auto; text-align: center; position: relative; }
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 20px;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 25px auto;
+      text-align: center;
+      position: relative;
+    }
     
     .btn-back {
-      display: inline-flex; align-items: center; gap: 6px;
-      color: #94a3b8; text-decoration: none; font-size: 0.95rem; font-weight: 600;
-      margin-bottom: 15px; padding: 6px 14px; border-radius: 8px; background: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: #1e293b;
       transition: all 0.2s;
     }
-    .btn-back:hover { color: #fff; background: #334155; }
 
-    h1 { font-size: 2rem; margin-bottom: 6px; }
-    .event-meta { color: #38bdf8; font-size: 0.95rem; margin-bottom: 15px; }
+    .btn-back:hover {
+      color: #fff;
+      background: #334155;
+    }
 
-    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
-    .btn { padding: 12px 24px; font-size: 1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .event-meta {
+      color: #38bdf8;
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
     .btn-primary { background-color: #3b82f6; color: #fff; }
     .btn-secondary { background-color: #334155; color: #fff; }
     .btn-success { background-color: #059669; color: #fff; }
-    #statusMessage { font-size: 0.95rem; color: #94a3b8; min-height: 24px; }
 
-    .tabs-wrapper { max-width: 1200px; margin: 0 auto 20px auto; border-bottom: 1px solid #334155; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
-    .tabs-bar { display: flex; gap: 10px; padding-bottom: 8px; }
-    .tab-btn { background: none; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; padding: 10px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
-    .tab-btn:hover { color: #f8fafc; background-color: #1e293b; }
-    .tab-btn.active { color: #fff; background-color: #2563eb; }
-    .tab-btn.tab-matched { background-color: #059669; color: #fff; }
+    #statusMessage {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      min-height: 24px;
+    }
 
-    .gallery-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-    .gallery-item { position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px; cursor: pointer; background-color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
-    .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-    .gallery-item:hover img { transform: scale(1.06); }
-    .folder-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); color: #e2e8f0; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; pointer-events: none; }
-    .empty-message { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #64748b; font-size: 1.1rem; }
-    #scrollLoader { max-width: 1200px; margin: 30px auto; text-align: center; color: #94a3b8; font-size: 0.95rem; display: none; }
+    /* Abas */
+    .tabs-wrapper {
+      max-width: 1200px;
+      margin: 0 auto 20px auto;
+      border-bottom: 1px solid #334155;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+
+    .tabs-bar {
+      display: flex;
+      gap: 10px;
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #f8fafc;
+      background-color: #1e293b;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background-color: #2563eb;
+    }
+
+    .tab-btn.tab-matched {
+      background-color: #059669;
+      color: #fff;
+    }
+
+    /* Grid com Thumbs Quadrados */
+    .gallery-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .gallery-item {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 12px;
+      cursor: pointer;
+      background-color: #1e293b;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.06);
+    }
+
+    .folder-badge {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      color: #e2e8f0;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .empty-message {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    #scrollLoader {
+      max-width: 1200px;
+      margin: 30px auto;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      display: none;
+    }
 
     /* Modais */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal-content { background: #1e293b; border-radius: 16px; padding: 20px; max-width: 500px; width: 100%; text-align: center; position: relative; }
-    .video-container { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #000; margin: 15px 0; }
-    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-    .face-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 210px; border: 2px dashed rgba(255, 255, 255, 0.7); border-radius: 50%; pointer-events: none; }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
 
-    .lightbox-content { max-width: 85vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; position: relative; }
-    .lightbox-img { max-width: 100%; max-height: 75vh; border-radius: 8px; object-fit: contain; }
-    .lightbox-actions { margin-top: 15px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .modal-content {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      margin: 15px 0;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .face-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 210px;
+      border: 2px dashed rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .lightbox-content {
+      max-width: 85vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+    }
+
+    .lightbox-actions {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     .photo-counter { color: #94a3b8; font-size: 0.95rem; }
-    .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-size: 2rem; width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; z-index: 1010; }
-    .nav-btn-prev { left: 25px; } .nav-btn-next { right: 25px; }
-    .btn-close { position: absolute; top: 20px; right: 20px; background: rgba(30, 41, 59, 0.8); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 1015; }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 2rem;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      z-index: 1010;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover { background: #2563eb; transform: translateY(-50%) scale(1.1); }
+    .nav-btn-prev { left: 25px; }
+    .nav-btn-next { right: 25px; }
+
+    .btn-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(30, 41, 59, 0.8);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1015;
+    }
   </style>
 </head>
 <body>
@@ -82,10 +353,14 @@
         📦 Baixar Todas as Minhas Fotos (.zip)
       </button>
     </div>
-    <p id="statusMessage">Carregando fotos...</p>
+    <p id="statusMessage">Conectando ao Google Drive...</p>
   </header>
 
-  <div class="tabs-wrapper"><div class="tabs-bar" id="tabsBar"></div></div>
+  <!-- Abas Dinâmicas geradas a partir das subpastas -->
+  <div class="tabs-wrapper">
+    <div class="tabs-bar" id="tabsBar"></div>
+  </div>
+
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
@@ -94,8 +369,13 @@
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
       <h3>Alinhe seu rosto</h3>
-      <div class="video-container"><video id="webcam" autoplay playsinline muted></video><div class="face-guide"></div></div>
-      <button class="btn btn-primary" id="btnCaptureAndSearch" style="width: 100%; justify-content: center;">🔍 Procurar Meu Rosto</button>
+      <div class="video-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <div class="face-guide"></div>
+      </div>
+      <button class="btn btn-primary" id="btnCaptureAndSearch" style="width: 100%; justify-content: center;">
+        🔍 Procurar Meu Rosto
+      </button>
     </div>
   </div>
 
@@ -115,7 +395,7 @@
 
   <script src="./eventos.js"></script>
   <script>
-    // 1. Identificar qual evento foi aberto pela URL (ex: ?id=casamento-mari-joao)
+    // 1. Identificar evento pela URL (?id=...)
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
     const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
@@ -124,16 +404,15 @@
     document.getElementById('eventDate').textContent = eventoAtual.data;
     document.title = `${eventoAtual.nome} - Galeria`;
 
-    const FOLDERS = eventoAtual.folders;
-
-    /* ESTADO DA GALERIA */
+    /* ESTADO DA PÁGINA */
+    let FOLDERS = []; // Preenchido dinamicamente com as subpastas encontradas
     const BATCH_SIZE = 30;
     let renderedCount = 0;
     let allPhotos = [];
     let currentFilteredPhotos = [];
     let currentPhotoIndex = 0;
     const galleryDescriptors = new Map();
-    let activeTabId = FOLDERS[0].id;
+    let activeTabId = '';
     let matchedPhotoIds = null;
     let stream = null;
 
@@ -158,9 +437,52 @@
     const btnNextPhoto = document.getElementById('btnNextPhoto');
     const photoCounter = document.getElementById('photoCounter');
 
-    // 2. Busca Fotos da Pasta do Drive
-    async function fetchPhotosFromDriveFolder(folder) {
-      const query = encodeURIComponent(`'${folder.folderId}' in parents and mimeType contains 'image/' and trashed = false`);
+    // 2. Descobrir as subpastas dentro da pasta principal do evento
+    async function loadEventGallery() {
+      statusMessage.textContent = 'Identificando as galerias no Google Drive...';
+
+      try {
+        const queryPastas = encodeURIComponent(`'${eventoAtual.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+        const urlPastas = `https://www.googleapis.com/drive/v3/files?q=${queryPastas}&fields=files(id,name)&key=${GOOGLE_API_KEY}`;
+        
+        const resPastas = await fetch(urlPastas);
+        const dataPastas = await resPastas.json();
+
+        let subpastas = dataPastas.files || [];
+
+        // Se o usuário não criou subpastas, usa a própria pasta do evento
+        if (subpastas.length === 0) {
+          subpastas = [{ id: eventoAtual.folderId, name: 'Todas as Fotos' }];
+        }
+
+        allPhotos = [];
+        for (const pasta of subpastas) {
+          statusMessage.textContent = `Carregando galeria: ${pasta.name}...`;
+          const fotosDaPasta = await fetchPhotosFromSubfolder(pasta.id, pasta.name);
+          allPhotos.push(...fotosDaPasta);
+        }
+
+        if (allPhotos.length === 0) {
+          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
+          return false;
+        }
+
+        FOLDERS = subpastas;
+        activeTabId = FOLDERS[0].id;
+
+        renderTabs();
+        setupGalleryView();
+        return true;
+      } catch (err) {
+        console.error(err);
+        statusMessage.textContent = 'Erro ao carregar fotos do Drive.';
+        return false;
+      }
+    }
+
+    // Busca fotos de uma subpasta específica
+    async function fetchPhotosFromSubfolder(folderId, folderName) {
+      const query = encodeURIComponent(`'${folderId}' in parents and mimeType contains 'image/' and trashed = false`);
       let allFiles = [];
       let pageToken = '';
 
@@ -170,7 +492,6 @@
           const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
           const res = await fetch(url);
           const data = await res.json();
-          if (data.error) throw new Error(data.error.message);
           if (data.files) allFiles.push(...data.files);
           pageToken = data.nextPageToken;
         } while (pageToken);
@@ -178,34 +499,19 @@
         return allFiles.map(file => ({
           id: file.id,
           name: file.name,
-          folderId: folder.id,
-          folderName: folder.name,
+          folderId: folderId,
+          folderName: folderName,
           thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
           fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`,
           downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
         }));
-      } catch (err) {
-        console.error(`Erro na pasta "${folder.name}":`, err);
+      } catch (e) {
+        console.warn(`Erro na subpasta ${folderName}:`, e);
         return [];
       }
     }
 
-    async function loadEventGallery() {
-      const promises = FOLDERS.map(f => fetchPhotosFromDriveFolder(f));
-      const results = await Promise.all(promises);
-      allPhotos = results.flat();
-
-      if (allPhotos.length === 0) {
-        statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
-        return false;
-      }
-
-      renderTabs();
-      setupGalleryView();
-      return true;
-    }
-
-    // 3. Abas e Scroll Infinito
+    // 3. Renderizar Abas e Grade com Scroll Infinito
     function renderTabs() {
       tabsBar.innerHTML = '';
       if (matchedPhotoIds !== null) {
@@ -279,7 +585,7 @@
       }
     });
 
-    // 4. Lightbox
+    // 4. Lightbox com Navegação Próxima / Anterior
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -298,7 +604,15 @@
     btnPrevPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length; updateLightboxDisplay(); };
     btnCloseLightbox.onclick = () => { lightboxModal.style.display = 'none'; lightboxImg.src = ''; };
 
-    // 5. Inteligência Facial
+    window.addEventListener('keydown', (e) => {
+      if (lightboxModal.style.display === 'flex') {
+        if (e.key === 'ArrowRight') btnNextPhoto.click();
+        if (e.key === 'ArrowLeft') btnPrevPhoto.click();
+        if (e.key === 'Escape') btnCloseLightbox.click();
+      }
+    });
+
+    // 5. Inteligência Facial e Câmera
     async function initFaceAPI() {
       const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       try {
@@ -309,17 +623,17 @@
         ]);
 
         const res = await fetch('./faces.json?t=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error();
-        const precomputedFaces = await res.json();
-
-        for (const [photoId, descriptors] of Object.entries(precomputedFaces)) {
-          galleryDescriptors.set(photoId, descriptors.map(d => new Float32Array(d)));
+        if (res.ok) {
+          const precomputedFaces = await res.json();
+          for (const [photoId, descriptors] of Object.entries(precomputedFaces)) {
+            galleryDescriptors.set(photoId, descriptors.map(d => new Float32Array(d)));
+          }
         }
 
         statusMessage.textContent = 'Pronto! Você pode ver as fotos ou escanear seu rosto.';
         btnScanFace.disabled = false;
       } catch (err) {
-        statusMessage.textContent = 'faces.json carregado.';
+        statusMessage.textContent = 'Pronto! Galeria carregada.';
         btnScanFace.disabled = false;
       }
     }
@@ -329,10 +643,16 @@
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
         webcam.srcObject = stream;
-      } catch (err) { alert('Câmera não permitida.'); cameraModal.style.display = 'none'; }
+      } catch (err) {
+        alert('Permissão de câmera negada.');
+        cameraModal.style.display = 'none';
+      }
     };
 
-    btnCloseCamera.onclick = () => { cameraModal.style.display = 'none'; if (stream) stream.getTracks().forEach(t => t.stop()); };
+    btnCloseCamera.onclick = () => {
+      cameraModal.style.display = 'none';
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    };
 
     btnCaptureAndSearch.onclick = async () => {
       btnCaptureAndSearch.disabled = true;
@@ -340,7 +660,7 @@
 
       const detection = await faceapi.detectSingleFace(webcam).withFaceLandmarks().withFaceDescriptor();
       if (!detection) {
-        alert('Rosto não identificado. Posicione-se com boa iluminação.');
+        alert('Rosto não identificado. Posicione-se em local iluminado.');
         btnCaptureAndSearch.disabled = false;
         btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
         return;
@@ -398,7 +718,10 @@
         a.download = `fotos_${eventoAtual.id}.zip`;
         a.click();
         btnDownloadAllMatched.textContent = '✔ Download Concluído!';
-        setTimeout(() => { btnDownloadAllMatched.disabled = false; btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${photosToDownload.length})`; }, 3000);
+        setTimeout(() => {
+          btnDownloadAllMatched.disabled = false;
+          btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${photosToDownload.length})`;
+        }, 3000);
       } catch (e) {
         alert('Erro ao compactar fotos.');
         btnDownloadAllMatched.disabled = false;
@@ -415,7 +738,7 @@
       statusMessage.textContent = 'Exibindo todas as fotos.';
     };
 
-    // Iniciar
+    // Inicialização
     (async () => {
       const ok = await loadEventGallery();
       if (ok) await initFaceAPI();
