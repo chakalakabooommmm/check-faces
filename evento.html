@@ -213,14 +213,14 @@
       .btn { padding: 10px 16px; font-size: 0.9rem; }
     }
 
-    /* MODAL DE CÂMERA BIOMÉTRICA */
+    /* MODAL DE CÂMERA */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.94);
       backdrop-filter: blur(8px);
       display: none;
       align-items: center;
@@ -272,12 +272,13 @@
       border-color: #10b981;
     }
 
+    /* Container do Vídeo */
     .video-container {
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
       border-radius: 16px;
-      overflow: hidden;
+      overflow: hidden; /* Corta a sombra preta para dentro do quadro */
       background: #000;
       margin: 12px 0 16px 0;
       border: 2px solid #3f3f46;
@@ -290,21 +291,7 @@
       transform: scaleX(-1);
     }
 
-    /* Flash Branco de Captura */
-    .camera-flash {
-      position: absolute;
-      inset: 0;
-      background: #ffffff;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.1s ease-out;
-      z-index: 20;
-    }
-    .camera-flash.flash-active {
-      opacity: 0.85;
-    }
-
-    /* Círculo Guia */
+    /* CÍRCULO COM TUDO PRETO EM VOLTA E CONTORNO VERMELHO */
     .face-guide {
       position: absolute;
       top: 50%;
@@ -312,22 +299,57 @@
       transform: translate(-50%, -50%);
       width: 220px;
       height: 275px;
-      border: 3px dashed #ef4444;
       border-radius: 50%;
+      border: 3.5px solid #ef4444; /* Contorno Vermelho */
+      /* A mágica: escurece tudo ao redor com preto profundo */
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88);
       pointer-events: none;
-      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: border-color 0.25s, transform 0.25s;
     }
 
-    .face-guide.ing {
-      border-color: #eab308; /* Amarelo: posicionado, aguardando parar de tremer */
-      border-style: solid;
+    .face-guide.holding {
+      border-color: #f87171;
     }
 
     .face-guide.aligned {
-      border-color: #10b981; /* Verde: totalmente estável e capturando */
-      border-style: solid;
-      transform: translate(-50%, -50%) scale(1.04);
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      border-color: #10b981; /* Fica verde apenas no clique final */
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
+    /* CONTAGEM REGRESSIVA NO MEIO DA CÂMERA */
+    .camera-countdown {
+      font-size: 4.5rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.8);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+      user-select: none;
+    }
+
+    .camera-countdown.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Flash Branco de Disparo */
+    .camera-flash {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s ease-out;
+      z-index: 25;
+    }
+    .camera-flash.flash-active {
+      opacity: 0.9;
     }
 
     .scan-instruction {
@@ -456,7 +478,7 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE ESCANEAMENTO BIOMÉTRICO ANTI-TREMIDO -->
+  <!-- MODAL DE ESCANEAMENTO COM CÍRCULO RECORTADO E CONTAGEM CENTRAL -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
@@ -474,11 +496,15 @@
       <div class="video-container">
         <video id="webcam" autoplay playsinline muted></video>
         <div class="camera-flash" id="cameraFlash"></div>
-        <div class="face-guide" id="faceGuide"></div>
+        
+        <!-- Círculo Guia com máscara preta e Contagem no Meio -->
+        <div class="face-guide" id="faceGuide">
+          <div class="camera-countdown" id="cameraCountdown">3</div>
+        </div>
       </div>
 
       <p style="font-size: 0.78rem; color: #71717a;">
-        Segure a cabeça firme por 1 segundo no ângulo indicado.
+        Segure a cabeça firme no ângulo indicado para a contagem disparar.
       </p>
     </div>
   </div>
@@ -533,6 +559,7 @@
     const webcam = document.getElementById('webcam');
     const btnCloseCamera = document.getElementById('btnCloseCamera');
     const faceGuide = document.getElementById('faceGuide');
+    const cameraCountdown = document.getElementById('cameraCountdown');
     const cameraFlash = document.getElementById('cameraFlash');
     const scanInstruction = document.getElementById('scanInstruction');
     const scanHint = document.getElementById('scanHint');
@@ -746,7 +773,7 @@
       }
     }
 
-    // 5. CÂMERA BIOMÉTRICA ANTI-TREMIDO (Com Medidor de Estabilidade e Flash)
+    // 5. CÂMERA BIOMÉTRICA COM CONTAGEM REGRESSIVA CENTRAL E MÁSCARA
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
       resetPills();
@@ -780,6 +807,8 @@
       pillLeft.className = 'step-pill';
       pillRight.className = 'step-pill';
       faceGuide.className = 'face-guide';
+      cameraCountdown.className = 'camera-countdown';
+      cameraCountdown.textContent = '';
     }
 
     function calculateHeadYaw(landmarks) {
@@ -793,7 +822,6 @@
       return (distLeft - distRight) / (distLeft + distRight);
     }
 
-    // Dispara o flash visual no instante da foto nítida
     function triggerFlashEffect() {
       cameraFlash.classList.add('flash-active');
       setTimeout(() => {
@@ -805,13 +833,11 @@
       const capturedDescriptors = [];
       let currentStage = 'FRONT'; 
       let stableFrames = 0;
-      
-      // Exige ~7 frames consecutivos parado (~700ms de estabilidade total)
-      const REQUIRED_STABLE_FRAMES = 7; 
+      const REQUIRED_STABLE_FRAMES = 8; // ~800ms de cabeça estável
       let prevNose = null;
 
       scanInstruction.textContent = "1. Olhe de frente";
-      scanHint.textContent = "Mantenha a cabeça parada no centro";
+      scanHint.textContent = "Centralize o rosto no círculo";
 
       while (isScanningActive && currentStage !== 'DONE') {
         const detection = await faceapi.detectSingleFace(
@@ -824,13 +850,10 @@
           const yaw = calculateHeadYaw(landmarks);
           const noseTip = landmarks.positions[30];
 
-          // Sensor Anti-Tremido: mede se a cabeça está se movendo entre frames
           let isMoving = false;
           if (prevNose) {
             const movement = Math.hypot(noseTip.x - prevNose.x, noseTip.y - prevNose.y);
-            if (movement > 3.5) { // Se moveu mais de 3.5 pixels, ainda está tremendo/virando
-              isMoving = true;
-            }
+            if (movement > 3.5) isMoving = true;
           }
           prevNose = { x: noseTip.x, y: noseTip.y };
 
@@ -846,19 +869,27 @@
 
           if (isCorrectAngle) {
             if (isMoving) {
-              // Ângulo certo, mas a pessoa ainda está se movendo
-              faceGuide.className = 'face-guide ing';
+              faceGuide.className = 'face-guide holding';
               scanHint.textContent = "Fique imóvel...";
+              cameraCountdown.className = 'camera-countdown';
               stableFrames = Math.max(0, stableFrames - 1);
             } else {
-              // Ângulo certo e perfeitamente estável!
               stableFrames++;
-              faceGuide.className = 'face-guide aligned';
-              const percent = Math.min(100, Math.round((stableFrames / REQUIRED_STABLE_FRAMES) * 100));
-              scanHint.textContent = `Perfeito! Segure firme: ${percent}%`;
+              faceGuide.className = 'face-guide holding';
+
+              // CONTAGEM REGRESSIVA 3, 2, 1 NO MEIO DO CÍRCULO
+              cameraCountdown.className = 'camera-countdown active';
+              if (stableFrames <= 2) {
+                cameraCountdown.textContent = '3';
+              } else if (stableFrames <= 5) {
+                cameraCountdown.textContent = '2';
+              } else if (stableFrames <= 7) {
+                cameraCountdown.textContent = '1';
+              }
 
               if (stableFrames >= REQUIRED_STABLE_FRAMES) {
-                // DISPARO NÍTIDO!
+                faceGuide.className = 'face-guide aligned';
+                cameraCountdown.textContent = '📸';
                 triggerFlashEffect();
                 capturedDescriptors.push(detection.descriptor);
                 stableFrames = 0;
@@ -869,15 +900,17 @@
                   pillLeft.className = 'step-pill active';
                   currentStage = 'LEFT';
                   scanInstruction.textContent = "2. Vire para a Esquerda";
-                  scanHint.textContent = "Gire devagar cerca de 30° e pare";
+                  scanHint.textContent = "Gire cerca de 30° e pare";
+                  cameraCountdown.className = 'camera-countdown';
                   faceGuide.className = 'face-guide';
-                  await new Promise(r => setTimeout(r, 1200)); // Pausa de 1,2s para virar com calma
+                  await new Promise(r => setTimeout(r, 1200));
                 } else if (currentStage === 'LEFT') {
                   pillLeft.className = 'step-pill completed';
                   pillRight.className = 'step-pill active';
                   currentStage = 'RIGHT';
                   scanInstruction.textContent = "3. Vire para a Direita";
                   scanHint.textContent = "Agora gire para o outro lado e pare";
+                  cameraCountdown.className = 'camera-countdown';
                   faceGuide.className = 'face-guide';
                   await new Promise(r => setTimeout(r, 1200));
                 } else if (currentStage === 'RIGHT') {
@@ -889,13 +922,15 @@
           } else {
             stableFrames = 0;
             faceGuide.className = 'face-guide';
+            cameraCountdown.className = 'camera-countdown';
             if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo";
-            if (currentStage === 'LEFT') scanHint.textContent = "Vire mais o rosto para a esquerda";
-            if (currentStage === 'RIGHT') scanHint.textContent = "Vire mais o rosto para a direita";
+            if (currentStage === 'LEFT') scanHint.textContent = "Vire o rosto para a esquerda";
+            if (currentStage === 'RIGHT') scanHint.textContent = "Vire o rosto para a direita";
           }
 
         } else {
           faceGuide.className = 'face-guide';
+          cameraCountdown.className = 'camera-countdown';
           stableFrames = 0;
           prevNose = null;
         }
@@ -905,7 +940,8 @@
 
       if (currentStage === 'DONE') {
         scanInstruction.textContent = "✨ 3 Fotos Nítidas Capturadas!";
-        scanHint.textContent = "Cruzando biometria com as fotos da galeria...";
+        scanHint.textContent = "Cruzando com as fotos da galeria...";
+        cameraCountdown.textContent = '✔';
         await new Promise(r => setTimeout(r, 600));
         
         closeCamera();
@@ -913,12 +949,11 @@
       }
     }
 
-    // 6. Comparação Calibrada com Console Log de Precisão
+    // 6. Comparação Calibrada
     function processMatchingWithMultiDescriptors(userDescriptors) {
-      statusMessage.textContent = 'Comparando biometria nítida com as fotos...';
+      statusMessage.textContent = 'Comparando biometria com as fotos...';
 
       const foundIds = new Set();
-      // Tolerância calibrada para fotos nítidas
       const DISTANCE_THRESHOLD = 0.54; 
 
       allPhotos.forEach(photo => {
@@ -932,7 +967,6 @@
           });
         });
 
-        // Imprime a nota no console (F12) para você ver a precisão
         if (menorDistancia < 0.62) {
           console.log(`Foto: ${photo.name} | Menor distância: ${menorDistancia.toFixed(3)}`);
         }
