@@ -18,7 +18,7 @@
     }
 
     body {
-      background-color: #18181b;
+      background-color: #18181b; /* Cinza escuro */
       color: #f4f4f5;
       padding: 20px;
     }
@@ -56,7 +56,7 @@
     }
 
     .event-meta {
-      color: #f87171;
+      color: #f87171; /* Vermelho claro */
       font-size: 0.95rem;
       margin-bottom: 15px;
       font-weight: 500;
@@ -145,7 +145,7 @@
     .tab-btn.active { color: #fff; background-color: #dc2626; }
     .tab-btn.tab-matched { background-color: #059669; color: #fff; }
 
-    /* Grid da Galeria */
+    /* Grid da Galeria (Computadores e Tablets) */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -475,13 +475,13 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE CÂMERA BIOMÉTRICA (CORRIGIDA) -->
+  <!-- MODAL DE CÂMERA BIOMÉTRICA (3 PASSOS GUIADOS COM AUTO-CALIBRAÇÃO) -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
       
       <div class="scan-instruction" id="scanInstruction">1. Olhe de frente</div>
-      <div class="scan-hint" id="scanHint">Centralize o rosto no círculo e pare</div>
+      <div class="scan-hint" id="scanHint">Olhe normalmente para a tela e fique parado</div>
 
       <!-- Indicadores dos 3 Passos Guiados -->
       <div class="scan-steps">
@@ -572,7 +572,7 @@
     const btnNextPhoto = document.getElementById('btnNextPhoto');
     const photoCounter = document.getElementById('photoCounter');
 
-    // 1. Descobrir subpastas
+    // 1. Descobrir subpastas dinamicamente com diagnóstico na tela
     async function loadEventGallery() {
       statusMessage.textContent = 'Identificando galerias no Google Drive...';
 
@@ -582,6 +582,13 @@
         
         const resPastas = await fetch(urlPastas);
         const dataPastas = await resPastas.json();
+
+        if (dataPastas.error) {
+          console.error("ERRO DO GOOGLE:", dataPastas.error);
+          statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro do Google: ${dataPastas.error.message}</span>`;
+          return false;
+        }
+
         let subpastas = dataPastas.files || [];
 
         if (subpastas.length === 0) {
@@ -596,7 +603,7 @@
         }
 
         if (allPhotos.length === 0) {
-          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
+          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento (verifique se a pasta está pública no Drive).';
           return false;
         }
 
@@ -608,7 +615,7 @@
         return true;
       } catch (err) {
         console.error(err);
-        statusMessage.textContent = 'Erro ao carregar fotos do Drive.';
+        statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro de conexão: ${err.message}</span>`;
         return false;
       }
     }
@@ -624,6 +631,12 @@
           const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
           const res = await fetch(url);
           const data = await res.json();
+
+          if (data.error) {
+            statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro na pasta ${folderName}: ${data.error.message}</span>`;
+            return [];
+          }
+
           if (data.files) allFiles.push(...data.files);
           pageToken = data.nextPageToken;
         } while (pageToken);
@@ -769,7 +782,7 @@
       }
     }
 
-    // 5. CÂMERA BIOMÉTRICA (3 PASSOS COM MATEMÁTICA CORRIGIDA)
+    // 5. CÂMERA BIOMÉTRICA (3 PASSOS COM AUTO-CALIBRAÇÃO DE POSTURA NATURAL)
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
       resetPills();
@@ -840,9 +853,10 @@
       let stableFrames = 0;
       const REQUIRED_STABLE_FRAMES = 8;
       let prevNose = null;
+      let baselinePitch = 1.4; // Guarda a postura natural relaxada do seu rosto
 
       scanInstruction.textContent = "1. Olhe de frente";
-      scanHint.textContent = "Centralize o rosto no círculo e pare";
+      scanHint.textContent = "Olhe normalmente para a tela e fique parado";
 
       while (isScanningActive && currentStage !== 'DONE') {
         const detection = await faceapi.detectSingleFace(
@@ -853,6 +867,7 @@
         if (detection) {
           const { yaw, pitchRatio, noseTip } = getHeadPose(detection.landmarks);
 
+          // Sensor Anti-Tremido
           let isMoving = false;
           if (prevNose) {
             const movement = Math.hypot(noseTip.x - prevNose.x, noseTip.y - prevNose.y);
@@ -863,14 +878,14 @@
           let isCorrectAngle = false;
 
           if (currentStage === 'FRONT') {
-            // De frente: centralizado horizontal e altura neutra
-            isCorrectAngle = Math.abs(yaw) < 0.16 && pitchRatio >= 1.15 && pitchRatio <= 1.62;
+            // ✅ POSTURA RELAXADA: Faixa ampla para você não precisar abaixar a cabeça
+            isCorrectAngle = Math.abs(yaw) < 0.18 && pitchRatio >= 0.90 && pitchRatio <= 2.0;
           } else if (currentStage === 'SIDE') {
             // De lado: virado cerca de 25°
             isCorrectAngle = yaw > 0.20;
           } else if (currentStage === 'UP') {
-            // ⚠️ CORREÇÃO: Erguendo o queixo para CIMA, a proporção AUMENTA para mais de 1.65!
-            isCorrectAngle = pitchRatio > 1.65 && Math.abs(yaw) < 0.20;
+            // ✅ QUEIXO NATURAL: Apenas ergue um pouco em relação à sua postura relaxada do Passo 1
+            isCorrectAngle = (pitchRatio > baselinePitch + 0.28 || pitchRatio > 1.85) && Math.abs(yaw) < 0.22;
           }
 
           if (isCorrectAngle) {
@@ -901,6 +916,9 @@
                 prevNose = null;
 
                 if (currentStage === 'FRONT') {
+                  // Memoriza o seu neutro exato para usar de base no Passo 3
+                  baselinePitch = pitchRatio;
+                  
                   pillFront.className = 'step-pill completed';
                   pillSide.className = 'step-pill active';
                   currentStage = 'SIDE';
@@ -928,9 +946,9 @@
             stableFrames = 0;
             faceGuide.className = 'face-guide';
             cameraCountdown.className = 'camera-countdown';
-            if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo";
+            if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo e fique parado";
             if (currentStage === 'SIDE') scanHint.textContent = "Vire mais o rosto de lado";
-            if (currentStage === 'UP') scanHint.textContent = "Erga mais o queixo para cima";
+            if (currentStage === 'UP') scanHint.textContent = "Erga um pouquinho o queixo para cima";
           }
 
         } else {
@@ -954,7 +972,7 @@
       }
     }
 
-    // 6. VALIDAÇÃO BIOMÉTRICA CIRÚRGICA (RÉGUA EM 0.515)
+    // 6. VALIDAÇÃO BIOMÉTRICA CIRÚRGICA (RÉGUA: 0.515 COM AUDITORIA NO CONSOLE)
     function processMatchingWithMultiDescriptors(userDescriptors) {
       statusMessage.textContent = 'Comparando biometria com as fotos...';
 
@@ -963,7 +981,7 @@
 
       console.clear();
       console.log('====================================================');
-      console.log('📊 AUDITORIA OPÇÃO 2 CORRIGIDA (RÉGUA: 0.515)');
+      console.log('📊 AUDITORIA DE PONTUAÇÃO (RÉGUA CIRÚRGICA: 0.515)');
       console.log('====================================================');
 
       allPhotos.forEach(photo => {
