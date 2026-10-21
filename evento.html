@@ -244,14 +244,14 @@
     .scan-steps {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 12px;
       margin: 15px 0 10px 0;
     }
 
     .step-pill {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      padding: 6px 12px;
+      padding: 6px 16px;
       border-radius: 20px;
       background: #18181b;
       color: #71717a;
@@ -272,13 +272,12 @@
       border-color: #10b981;
     }
 
-    /* Container do Vídeo */
     .video-container {
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
       border-radius: 16px;
-      overflow: hidden; /* Corta a sombra preta para dentro do quadro */
+      overflow: hidden;
       background: #000;
       margin: 12px 0 16px 0;
       border: 2px solid #3f3f46;
@@ -291,7 +290,7 @@
       transform: scaleX(-1);
     }
 
-    /* CÍRCULO COM TUDO PRETO EM VOLTA E CONTORNO VERMELHO */
+    /* MÁSCARA PRETA COM CONTORNO VERMELHO */
     .face-guide {
       position: absolute;
       top: 50%;
@@ -300,8 +299,7 @@
       width: 220px;
       height: 275px;
       border-radius: 50%;
-      border: 3.5px solid #ef4444; /* Contorno Vermelho */
-      /* A mágica: escurece tudo ao redor com preto profundo */
+      border: 3.5px solid #ef4444;
       box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88);
       pointer-events: none;
       display: flex;
@@ -316,11 +314,11 @@
     }
 
     .face-guide.aligned {
-      border-color: #10b981; /* Fica verde apenas no clique final */
+      border-color: #10b981;
       transform: translate(-50%, -50%) scale(1.02);
     }
 
-    /* CONTAGEM REGRESSIVA NO MEIO DA CÂMERA */
+    /* CONTAGEM CENTRAL */
     .camera-countdown {
       font-size: 4.5rem;
       font-weight: 900;
@@ -338,7 +336,6 @@
       transform: scale(1);
     }
 
-    /* Flash Branco de Disparo */
     .camera-flash {
       position: absolute;
       inset: 0;
@@ -458,7 +455,7 @@
 
     <div class="controls">
       <button class="btn btn-primary" id="btnScanFace" disabled>
-        📷 Escanear meu Rosto (3 Ângulos)
+        📷 Escanear meu Rosto (2 Ângulos)
       </button>
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
@@ -478,7 +475,7 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE ESCANEAMENTO COM CÍRCULO RECORTADO E CONTAGEM CENTRAL -->
+  <!-- MODAL DE ESCANEAMENTO BIOMÉTRICO (2 ÂNGULOS) -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
@@ -486,18 +483,16 @@
       <div class="scan-instruction" id="scanInstruction">Alinhe seu rosto</div>
       <div class="scan-hint" id="scanHint">Centralize o rosto no círculo</div>
 
-      <!-- Indicadores dos 3 Passos -->
+      <!-- Indicadores dos 2 Passos -->
       <div class="scan-steps">
         <span class="step-pill active" id="pillFront">1. Frente</span>
         <span class="step-pill" id="pillLeft">2. Esquerda</span>
-        <span class="step-pill" id="pillRight">3. Direita</span>
       </div>
 
       <div class="video-container">
         <video id="webcam" autoplay playsinline muted></video>
         <div class="camera-flash" id="cameraFlash"></div>
         
-        <!-- Círculo Guia com máscara preta e Contagem no Meio -->
         <div class="face-guide" id="faceGuide">
           <div class="camera-countdown" id="cameraCountdown">3</div>
         </div>
@@ -565,7 +560,6 @@
     const scanHint = document.getElementById('scanHint');
     const pillFront = document.getElementById('pillFront');
     const pillLeft = document.getElementById('pillLeft');
-    const pillRight = document.getElementById('pillRight');
 
     // Lightbox
     const lightboxModal = document.getElementById('lightboxModal');
@@ -773,7 +767,7 @@
       }
     }
 
-    // 5. CÂMERA BIOMÉTRICA COM CONTAGEM REGRESSIVA CENTRAL E MÁSCARA
+    // 5. CÂMERA BIOMÉTRICA EM 2 ETAPAS (Frente e Esquerda)
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
       resetPills();
@@ -805,7 +799,6 @@
     function resetPills() {
       pillFront.className = 'step-pill active';
       pillLeft.className = 'step-pill';
-      pillRight.className = 'step-pill';
       faceGuide.className = 'face-guide';
       cameraCountdown.className = 'camera-countdown';
       cameraCountdown.textContent = '';
@@ -831,7 +824,7 @@
 
     async function startBiometricCaptureSequence() {
       const capturedDescriptors = [];
-      let currentStage = 'FRONT'; 
+      let currentStage = 'FRONT'; // 'FRONT' -> 'LEFT' -> 'DONE'
       let stableFrames = 0;
       const REQUIRED_STABLE_FRAMES = 8; // ~800ms de cabeça estável
       let prevNose = null;
@@ -863,8 +856,6 @@
             isCorrectAngle = Math.abs(yaw) < 0.16;
           } else if (currentStage === 'LEFT') {
             isCorrectAngle = yaw > 0.22;
-          } else if (currentStage === 'RIGHT') {
-            isCorrectAngle = yaw < -0.22;
           }
 
           if (isCorrectAngle) {
@@ -877,7 +868,6 @@
               stableFrames++;
               faceGuide.className = 'face-guide holding';
 
-              // CONTAGEM REGRESSIVA 3, 2, 1 NO MEIO DO CÍRCULO
               cameraCountdown.className = 'camera-countdown active';
               if (stableFrames <= 2) {
                 cameraCountdown.textContent = '3';
@@ -906,15 +896,6 @@
                   await new Promise(r => setTimeout(r, 1200));
                 } else if (currentStage === 'LEFT') {
                   pillLeft.className = 'step-pill completed';
-                  pillRight.className = 'step-pill active';
-                  currentStage = 'RIGHT';
-                  scanInstruction.textContent = "3. Vire para a Direita";
-                  scanHint.textContent = "Agora gire para o outro lado e pare";
-                  cameraCountdown.className = 'camera-countdown';
-                  faceGuide.className = 'face-guide';
-                  await new Promise(r => setTimeout(r, 1200));
-                } else if (currentStage === 'RIGHT') {
-                  pillRight.className = 'step-pill completed';
                   currentStage = 'DONE';
                 }
               }
@@ -925,7 +906,6 @@
             cameraCountdown.className = 'camera-countdown';
             if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo";
             if (currentStage === 'LEFT') scanHint.textContent = "Vire o rosto para a esquerda";
-            if (currentStage === 'RIGHT') scanHint.textContent = "Vire o rosto para a direita";
           }
 
         } else {
@@ -939,10 +919,10 @@
       }
 
       if (currentStage === 'DONE') {
-        scanInstruction.textContent = "✨ 3 Fotos Nítidas Capturadas!";
+        scanInstruction.textContent = "✨ 2 Fotos Nítidas Capturadas!";
         scanHint.textContent = "Cruzando com as fotos da galeria...";
         cameraCountdown.textContent = '✔';
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 500));
         
         closeCamera();
         processMatchingWithMultiDescriptors(capturedDescriptors);
@@ -954,6 +934,7 @@
       statusMessage.textContent = 'Comparando biometria com as fotos...';
 
       const foundIds = new Set();
+      // Tolerância calibrada para fotos nítidas
       const DISTANCE_THRESHOLD = 0.54; 
 
       allPhotos.forEach(photo => {
