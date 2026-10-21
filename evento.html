@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galeria do Evento</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
+
+    header { max-width: 1200px; margin: 0 auto 25px auto; text-align: center; position: relative; }
+    
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #94a3b8; text-decoration: none; font-size: 0.95rem; font-weight: 600;
+      margin-bottom: 15px; padding: 6px 14px; border-radius: 8px; background: #1e293b;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { color: #fff; background: #334155; }
+
+    h1 { font-size: 2rem; margin-bottom: 6px; }
+    .event-meta { color: #38bdf8; font-size: 0.95rem; margin-bottom: 15px; }
+
+    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
+    .btn { padding: 12px 24px; font-size: 1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background-color: #3b82f6; color: #fff; }
+    .btn-secondary { background-color: #334155; color: #fff; }
+    .btn-success { background-color: #059669; color: #fff; }
+    #statusMessage { font-size: 0.95rem; color: #94a3b8; min-height: 24px; }
+
+    .tabs-wrapper { max-width: 1200px; margin: 0 auto 20px auto; border-bottom: 1px solid #334155; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+    .tabs-bar { display: flex; gap: 10px; padding-bottom: 8px; }
+    .tab-btn { background: none; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; padding: 10px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .tab-btn:hover { color: #f8fafc; background-color: #1e293b; }
+    .tab-btn.active { color: #fff; background-color: #2563eb; }
+    .tab-btn.tab-matched { background-color: #059669; color: #fff; }
+
+    .gallery-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .gallery-item { position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px; cursor: pointer; background-color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+    .gallery-item:hover img { transform: scale(1.06); }
+    .folder-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); color: #e2e8f0; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; pointer-events: none; }
+    .empty-message { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #64748b; font-size: 1.1rem; }
+    #scrollLoader { max-width: 1200px; margin: 30px auto; text-align: center; color: #94a3b8; font-size: 0.95rem; display: none; }
+
+    /* Modais */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-content { background: #1e293b; border-radius: 16px; padding: 20px; max-width: 500px; width: 100%; text-align: center; position: relative; }
+    .video-container { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #000; margin: 15px 0; }
+    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .face-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 210px; border: 2px dashed rgba(255, 255, 255, 0.7); border-radius: 50%; pointer-events: none; }
+
+    .lightbox-content { max-width: 85vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .lightbox-img { max-width: 100%; max-height: 75vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-actions { margin-top: 15px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .photo-counter { color: #94a3b8; font-size: 0.95rem; }
+    .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-size: 2rem; width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; z-index: 1010; }
+    .nav-btn-prev { left: 25px; } .nav-btn-next { right: 25px; }
+    .btn-close { position: absolute; top: 20px; right: 20px; background: rgba(30, 41, 59, 0.8); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 1015; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="./index.html" class="btn-back">← Voltar para Todos os Eventos</a>
+    <h1 id="eventTitle">Carregando Evento...</h1>
+    <p class="event-meta" id="eventDate"></p>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="btnScanFace" disabled>
+        📷 Escanear meu Rosto neste Evento
+      </button>
+      <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
+        Mostrar Todas as Fotos
+      </button>
+      <button class="btn btn-success" id="btnDownloadAllMatched" style="display: none;">
+        📦 Baixar Todas as Minhas Fotos (.zip)
+      </button>
+    </div>
+    <p id="statusMessage">Carregando fotos...</p>
+  </header>
+
+  <div class="tabs-wrapper"><div class="tabs-bar" id="tabsBar"></div></div>
+  <main class="gallery-grid" id="galleryGrid"></main>
+  <div id="scrollLoader">Carregando mais fotos...</div>
+
+  <!-- Modal Câmera -->
+  <div class="modal-overlay" id="cameraModal">
+    <div class="modal-content">
+      <button class="btn-close" id="btnCloseCamera">&times;</button>
+      <h3>Alinhe seu rosto</h3>
+      <div class="video-container"><video id="webcam" autoplay playsinline muted></video><div class="face-guide"></div></div>
+      <button class="btn btn-primary" id="btnCaptureAndSearch" style="width: 100%; justify-content: center;">🔍 Procurar Meu Rosto</button>
+    </div>
+  </div>
+
+  <!-- Modal Lightbox -->
+  <div class="modal-overlay" id="lightboxModal">
+    <button class="btn-close" id="btnCloseLightbox">&times;</button>
+    <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
+      <div class="lightbox-actions">
+        <a id="btnDownload" class="btn btn-primary" href="" target="_blank" download>⬇ Baixar em Alta Resolução</a>
+        <span class="photo-counter" id="photoCounter"></span>
+      </div>
+    </div>
+    <button class="nav-btn nav-btn-next" id="btnNextPhoto">&#10095;</button>
+  </div>
+
+  <script src="./eventos.js"></script>
+  <script>
+    // 1. Identificar qual evento foi aberto pela URL (ex: ?id=casamento-mari-joao)
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
+
+    document.getElementById('eventTitle').textContent = eventoAtual.nome;
+    document.getElementById('eventDate').textContent = eventoAtual.data;
+    document.title = `${eventoAtual.nome} - Galeria`;
+
+    const FOLDERS = eventoAtual.folders;
+
+    /* ESTADO DA GALERIA */
+    const BATCH_SIZE = 30;
+    let renderedCount = 0;
+    let allPhotos = [];
+    let currentFilteredPhotos = [];
+    let currentPhotoIndex = 0;
+    const galleryDescriptors = new Map();
+    let activeTabId = FOLDERS[0].id;
+    let matchedPhotoIds = null;
+    let stream = null;
+
+    const tabsBar = document.getElementById('tabsBar');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const scrollLoader = document.getElementById('scrollLoader');
+    const statusMessage = document.getElementById('statusMessage');
+    const btnScanFace = document.getElementById('btnScanFace');
+    const btnResetFilter = document.getElementById('btnResetFilter');
+    const btnDownloadAllMatched = document.getElementById('btnDownloadAllMatched');
+
+    const cameraModal = document.getElementById('cameraModal');
+    const webcam = document.getElementById('webcam');
+    const btnCaptureAndSearch = document.getElementById('btnCaptureAndSearch');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnPrevPhoto = document.getElementById('btnPrevPhoto');
+    const btnNextPhoto = document.getElementById('btnNextPhoto');
+    const photoCounter = document.getElementById('photoCounter');
+
+    // 2. Busca Fotos da Pasta do Drive
+    async function fetchPhotosFromDriveFolder(folder) {
+      const query = encodeURIComponent(`'${folder.folderId}' in parents and mimeType contains 'image/' and trashed = false`);
+      let allFiles = [];
+      let pageToken = '';
+
+      try {
+        do {
+          const pageParam = pageToken ? `&pageToken=${pageToken}` : '';
+          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          if (data.files) allFiles.push(...data.files);
+          pageToken = data.nextPageToken;
+        } while (pageToken);
+
+        return allFiles.map(file => ({
+          id: file.id,
+          name: file.name,
+          folderId: folder.id,
+          folderName: folder.name,
+          thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
+          fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`,
+          downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
+        }));
+      } catch (err) {
+        console.error(`Erro na pasta "${folder.name}":`, err);
+        return [];
+      }
+    }
+
+    async function loadEventGallery() {
+      const promises = FOLDERS.map(f => fetchPhotosFromDriveFolder(f));
+      const results = await Promise.all(promises);
+      allPhotos = results.flat();
+
+      if (allPhotos.length === 0) {
+        statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
+        return false;
+      }
+
+      renderTabs();
+      setupGalleryView();
+      return true;
+    }
+
+    // 3. Abas e Scroll Infinito
+    function renderTabs() {
+      tabsBar.innerHTML = '';
+      if (matchedPhotoIds !== null) {
+        const matchedBtn = document.createElement('button');
+        matchedBtn.className = `tab-btn tab-matched ${activeTabId === 'matched' ? 'active' : ''}`;
+        matchedBtn.innerHTML = `✨ Suas Fotos (${matchedPhotoIds.size})`;
+        matchedBtn.onclick = () => { activeTabId = 'matched'; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(matchedBtn);
+      }
+
+      FOLDERS.forEach(folder => {
+        const total = allPhotos.filter(p => {
+          const inFolder = p.folderId === folder.id;
+          return matchedPhotoIds ? (inFolder && matchedPhotoIds.has(p.id)) : inFolder;
+        }).length;
+
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${activeTabId === folder.id ? 'active' : ''}`;
+        btn.innerHTML = `${folder.name} <span>(${total})</span>`;
+        btn.onclick = () => { activeTabId = folder.id; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(btn);
+      });
+    }
+
+    function setupGalleryView() {
+      galleryGrid.innerHTML = '';
+      renderedCount = 0;
+
+      if (activeTabId === 'matched') {
+        currentFilteredPhotos = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      } else {
+        currentFilteredPhotos = allPhotos.filter(p => {
+          const match = p.folderId === activeTabId;
+          return matchedPhotoIds ? (match && matchedPhotoIds.has(p.id)) : match;
+        });
+      }
+
+      if (currentFilteredPhotos.length === 0) {
+        galleryGrid.innerHTML = '<div class="empty-message">Nenhuma foto para exibir nesta aba.</div>';
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      renderNextBatch();
+    }
+
+    function renderNextBatch() {
+      if (renderedCount >= currentFilteredPhotos.length) {
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      const nextBatch = currentFilteredPhotos.slice(renderedCount, renderedCount + BATCH_SIZE);
+      nextBatch.forEach((photo, i) => {
+        const globalIndex = renderedCount + i;
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+          <img src="${photo.thumbUrl}" alt="${photo.name}" loading="lazy">
+          ${activeTabId === 'matched' ? `<span class="folder-badge">${photo.folderName}</span>` : ''}
+        `;
+        item.onclick = () => openLightbox(globalIndex);
+        galleryGrid.appendChild(item);
+      });
+
+      renderedCount += nextBatch.length;
+      scrollLoader.style.display = renderedCount < currentFilteredPhotos.length ? 'block' : 'none';
+    }
+
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+        renderNextBatch();
+      }
+    });
+
+    // 4. Lightbox
+    function openLightbox(index) {
+      currentPhotoIndex = index;
+      updateLightboxDisplay();
+      lightboxModal.style.display = 'flex';
+    }
+
+    function updateLightboxDisplay() {
+      if (currentFilteredPhotos.length === 0) return;
+      const photo = currentFilteredPhotos[currentPhotoIndex];
+      lightboxImg.src = photo.fullUrl;
+      btnDownload.href = photo.downloadUrl;
+      photoCounter.textContent = `${currentPhotoIndex + 1} de ${currentFilteredPhotos.length}`;
+    }
+
+    btnNextPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex + 1) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnPrevPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnCloseLightbox.onclick = () => { lightboxModal.style.display = 'none'; lightboxImg.src = ''; };
+
+    // 5. Inteligência Facial
+    async function initFaceAPI() {
+      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+
+        const res = await fetch('./faces.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error();
+        const precomputedFaces = await res.json();
+
+        for (const [photoId, descriptors] of Object.entries(precomputedFaces)) {
+          galleryDescriptors.set(photoId, descriptors.map(d => new Float32Array(d)));
+        }
+
+        statusMessage.textContent = 'Pronto! Você pode ver as fotos ou escanear seu rosto.';
+        btnScanFace.disabled = false;
+      } catch (err) {
+        statusMessage.textContent = 'faces.json carregado.';
+        btnScanFace.disabled = false;
+      }
+    }
+
+    btnScanFace.onclick = async () => {
+      cameraModal.style.display = 'flex';
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+        webcam.srcObject = stream;
+      } catch (err) { alert('Câmera não permitida.'); cameraModal.style.display = 'none'; }
+    };
+
+    btnCloseCamera.onclick = () => { cameraModal.style.display = 'none'; if (stream) stream.getTracks().forEach(t => t.stop()); };
+
+    btnCaptureAndSearch.onclick = async () => {
+      btnCaptureAndSearch.disabled = true;
+      btnCaptureAndSearch.textContent = 'Buscando seu rosto...';
+
+      const detection = await faceapi.detectSingleFace(webcam).withFaceLandmarks().withFaceDescriptor();
+      if (!detection) {
+        alert('Rosto não identificado. Posicione-se com boa iluminação.');
+        btnCaptureAndSearch.disabled = false;
+        btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
+        return;
+      }
+
+      const userDescriptor = detection.descriptor;
+      const foundIds = new Set();
+      const DISTANCE_THRESHOLD = 0.55;
+
+      allPhotos.forEach(photo => {
+        const descriptors = galleryDescriptors.get(photo.id) || [];
+        const match = descriptors.some(desc => faceapi.euclideanDistance(userDescriptor, desc) < DISTANCE_THRESHOLD);
+        if (match) foundIds.add(photo.id);
+      });
+
+      cameraModal.style.display = 'none';
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      btnCaptureAndSearch.disabled = false;
+      btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
+
+      if (foundIds.size > 0) {
+        matchedPhotoIds = foundIds;
+        activeTabId = 'matched';
+        renderTabs();
+        setupGalleryView();
+        statusMessage.textContent = `Encontramos ${foundIds.size} foto(s) onde você aparece!`;
+        btnResetFilter.style.display = 'inline-block';
+        btnDownloadAllMatched.style.display = 'inline-block';
+        btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
+      } else {
+        alert('Não encontramos você nas fotos deste evento.');
+      }
+    };
+
+    // 6. Download ZIP
+    btnDownloadAllMatched.onclick = async () => {
+      if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
+      const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      btnDownloadAllMatched.disabled = true;
+
+      try {
+        const zip = new JSZip();
+        let i = 0;
+        for (const photo of photosToDownload) {
+          i++;
+          btnDownloadAllMatched.textContent = `Baixando ${i}/${photosToDownload.length}...`;
+          const res = await fetch(photo.fullUrl);
+          const blob = await res.blob();
+          zip.file(`${photo.folderName}_${photo.name}.jpg`, blob);
+        }
+        btnDownloadAllMatched.textContent = 'Compactando .zip...';
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = `fotos_${eventoAtual.id}.zip`;
+        a.click();
+        btnDownloadAllMatched.textContent = '✔ Download Concluído!';
+        setTimeout(() => { btnDownloadAllMatched.disabled = false; btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${photosToDownload.length})`; }, 3000);
+      } catch (e) {
+        alert('Erro ao compactar fotos.');
+        btnDownloadAllMatched.disabled = false;
+      }
+    };
+
+    btnResetFilter.onclick = () => {
+      matchedPhotoIds = null;
+      activeTabId = FOLDERS[0].id;
+      btnResetFilter.style.display = 'none';
+      btnDownloadAllMatched.style.display = 'none';
+      renderTabs();
+      setupGalleryView();
+      statusMessage.textContent = 'Exibindo todas as fotos.';
+    };
+
+    // Iniciar
+    (async () => {
+      const ok = await loadEventGallery();
+      if (ok) await initFaceAPI();
+    })();
+  </script>
+</body>
+</html>
