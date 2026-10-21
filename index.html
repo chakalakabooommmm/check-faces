@@ -7,6 +7,8 @@
   
   <!-- Face-API.js -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- JSZip para empacotar as fotos em .zip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     * {
@@ -72,6 +74,15 @@
     .btn-secondary {
       background-color: #334155;
       color: #fff;
+    }
+
+    .btn-success {
+      background-color: #059669;
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background-color: #047857;
     }
 
     #statusMessage {
@@ -345,6 +356,10 @@
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
       </button>
+      <!-- NOVO BOTÃO DE DOWNLOAD EM LOTE -->
+      <button class="btn btn-success" id="btnDownloadAllMatched" style="display: none;">
+        📦 Baixar Todas as Minhas Fotos (.zip)
+      </button>
     </div>
     <p id="statusMessage">Carregando galeria...</p>
   </header>
@@ -375,11 +390,10 @@
     </div>
   </div>
 
-  <!-- Modal Lightbox com Navegação Lateral e Download -->
+  <!-- Modal Lightbox (Visualizar e Baixar) -->
   <div class="modal-overlay" id="lightboxModal">
     <button class="btn-close" id="btnCloseLightbox" title="Fechar (Esc)">&times;</button>
     
-    <!-- Botão Foto Anterior -->
     <button class="nav-btn nav-btn-prev" id="btnPrevPhoto" title="Foto Anterior (Seta Esquerda)">&#10094;</button>
 
     <div class="lightbox-content">
@@ -392,14 +406,12 @@
       </div>
     </div>
 
-    <!-- Botão Próxima Foto -->
     <button class="nav-btn nav-btn-next" id="btnNextPhoto" title="Próxima Foto (Seta Direita)">&#10095;</button>
   </div>
 
   <script>
     /* ====================================================================
        CONFIGURAÇÃO: COLOQUE SUA CHAVE E SUAS PASTAS AQUI
-       Certifique-se de que os IDs das pastas sejam os mesmos do sync-faces.js
        ==================================================================== */
     const GOOGLE_API_KEY = 'AIzaSyCP2F0q6eyyFskTGj3jcjkhdfLP_11Wvz8';
 
@@ -425,6 +437,7 @@
     const statusMessage = document.getElementById('statusMessage');
     const btnScanFace = document.getElementById('btnScanFace');
     const btnResetFilter = document.getElementById('btnResetFilter');
+    const btnDownloadAllMatched = document.getElementById('btnDownloadAllMatched');
 
     const cameraModal = document.getElementById('cameraModal');
     const webcam = document.getElementById('webcam');
@@ -599,7 +612,7 @@
       }
     });
 
-    // 5. CARREGAMENTO DO FACES.JSON (Sempre buscando a versão mais fresca)
+    // 5. Carregamento do faces.json
     async function initFaceAPI() {
       const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
 
@@ -610,8 +623,7 @@
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
         ]);
 
-        // "?t=" + Date.now() força o navegador a nunca usar cache velho
-        const res = await fetch('faces.json?t=' + Date.now());
+        const res = await fetch('./faces.json?t=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) throw new Error('faces.json não encontrado');
 
         const precomputedFaces = await res.json();
@@ -657,7 +669,7 @@
 
     btnCloseCamera.onclick = closeCameraModal;
 
-    // 7. Comparação instantânea
+    // 7. Comparação e Reconhecimento
     btnCaptureAndSearch.onclick = async () => {
       btnCaptureAndSearch.disabled = true;
       btnCaptureAndSearch.textContent = 'Analisando seu rosto...';
@@ -694,9 +706,71 @@
         renderTabs();
         renderGallery();
         statusMessage.textContent = `Sucesso! Encontramos ${foundIds.size} foto(s) onde você aparece.`;
+        
+        // Exibe os botões de controle
         btnResetFilter.style.display = 'inline-block';
+        btnDownloadAllMatched.style.display = 'inline-block';
+        btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
       } else {
         alert('Não encontramos nenhuma foto com o seu rosto.');
+      }
+    };
+
+    // 8. Baixar Todas as Fotos Encontradas em arquivo .ZIP
+    btnDownloadAllMatched.onclick = async () => {
+      if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
+
+      const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      const total = photosToDownload.length;
+
+      btnDownloadAllMatched.disabled = true;
+      const originalText = btnDownloadAllMatched.textContent;
+
+      try {
+        const zip = new JSZip();
+        let baixadas = 0;
+
+        for (const photo of photosToDownload) {
+          baixadas++;
+          btnDownloadAllMatched.textContent = `Baixando ${baixadas}/${total}...`;
+
+          try {
+            // Baixa a imagem em alta resolução
+            const response = await fetch(photo.fullUrl);
+            const blob = await response.blob();
+            
+            // Define o nome do arquivo dentro do zip
+            const extension = photo.name.includes('.') ? '' : '.jpg';
+            const fileName = `${photo.folderName}_${photo.name}${extension}`;
+            zip.file(fileName, blob);
+          } catch (e) {
+            console.warn(`Erro ao baixar foto individual: ${photo.name}`, e);
+          }
+        }
+
+        btnDownloadAllMatched.textContent = 'Compactando arquivo .zip...';
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        // Dispara o download automático do arquivo ZIP
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `minhas_fotos_galeria.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        btnDownloadAllMatched.textContent = '✔ Download Concluído!';
+        setTimeout(() => {
+          btnDownloadAllMatched.textContent = originalText;
+          btnDownloadAllMatched.disabled = false;
+        }, 3000);
+
+      } catch (err) {
+        console.error(err);
+        alert('Ocorreu um erro ao gerar o arquivo ZIP. Tente baixar individualmente.');
+        btnDownloadAllMatched.disabled = false;
+        btnDownloadAllMatched.textContent = originalText;
       }
     };
 
@@ -704,12 +778,13 @@
       matchedPhotoIds = null;
       activeTabId = FOLDERS[0].id;
       btnResetFilter.style.display = 'none';
+      btnDownloadAllMatched.style.display = 'none';
       renderTabs();
       renderGallery();
       statusMessage.textContent = 'Exibindo todas as fotos.';
     };
 
-    // Inicialização
+    // Inicialização da Página
     (async () => {
       const ok = await loadAllGalleries();
       if (ok) {
