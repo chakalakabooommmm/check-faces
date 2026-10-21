@@ -21,7 +21,7 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || CONFIG_KEY;
 const JSON_FILE = path.join(__dirname, 'faces.json');
 
 async function main() {
-  if (!GOOGLE_API_KEY || GOOGLE_API_KEY === 'AIzaSyCP2F0q6eyyFskTGj3jcjkhdfLP_11Wvz8') {
+  if (!GOOGLE_API_KEY || GOOGLE_API_KEY === 'SUA_CHAVE_API_AQUI') {
     console.error('❌ ERRO: Chave GOOGLE_API_KEY não configurada!');
     process.exit(1);
   }
