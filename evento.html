@@ -18,8 +18,8 @@
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
+      background-color: #18181b; /* Cinza escuro */
+      color: #f4f4f5;
       padding: 20px;
     }
 
@@ -34,20 +34,20 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #94a3b8;
+      color: #a1a1aa;
       text-decoration: none;
       font-size: 0.95rem;
       font-weight: 600;
       margin-bottom: 15px;
       padding: 8px 16px;
       border-radius: 8px;
-      background: #1e293b;
+      background: #27272a;
       transition: all 0.2s;
     }
 
     .btn-back:hover {
       color: #fff;
-      background: #334155;
+      background: #3f3f46;
     }
 
     h1 {
@@ -55,10 +55,12 @@
       margin-bottom: 6px;
     }
 
+    /* Texto de destaque em Vermelho */
     .event-meta {
-      color: #38bdf8;
+      color: #f87171; /* Vermelho claro */
       font-size: 0.95rem;
       margin-bottom: 15px;
+      font-weight: 500;
     }
 
     .controls {
@@ -92,13 +94,35 @@
       transform: scale(0.98);
     }
 
-    .btn-primary { background-color: #3b82f6; color: #fff; }
-    .btn-secondary { background-color: #334155; color: #fff; }
-    .btn-success { background-color: #059669; color: #fff; }
+    /* Botão Principal em Vermelho */
+    .btn-primary { 
+      background-color: #dc2626; /* Vermelho */
+      color: #fff; 
+    }
+    .btn-primary:hover {
+      background-color: #b91c1c; /* Vermelho escuro */
+    }
+
+    .btn-secondary { 
+      background-color: #27272a; 
+      color: #f4f4f5; 
+      border: 1px solid #3f3f46;
+    }
+    .btn-secondary:hover {
+      background-color: #3f3f46;
+    }
+
+    .btn-success { 
+      background-color: #059669; 
+      color: #fff; 
+    }
+    .btn-success:hover {
+      background-color: #047857;
+    }
 
     #statusMessage {
       font-size: 0.95rem;
-      color: #94a3b8;
+      color: #a1a1aa;
       min-height: 24px;
     }
 
@@ -106,7 +130,7 @@
     .tabs-wrapper {
       max-width: 1200px;
       margin: 0 auto 20px auto;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid #27272a;
       overflow-x: auto;
       white-space: nowrap;
       scrollbar-width: thin;
@@ -121,7 +145,7 @@
     .tab-btn {
       background: none;
       border: none;
-      color: #94a3b8;
+      color: #a1a1aa;
       font-size: 1rem;
       font-weight: 600;
       padding: 10px 18px;
@@ -134,13 +158,14 @@
     }
 
     .tab-btn:hover {
-      color: #f8fafc;
-      background-color: #1e293b;
+      color: #f4f4f5;
+      background-color: #27272a;
     }
 
+    /* Aba Ativa em Vermelho */
     .tab-btn.active {
       color: #fff;
-      background-color: #2563eb;
+      background-color: #dc2626; /* Vermelho */
     }
 
     .tab-btn.tab-matched {
@@ -148,7 +173,7 @@
       color: #fff;
     }
 
-    /* Grid padrão (Computadores e Tablets) */
+    /* Grid da Galeria */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -163,8 +188,8 @@
       overflow: hidden;
       border-radius: 12px;
       cursor: pointer;
-      background-color: #1e293b;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      background-color: #27272a;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     }
 
     .gallery-item img {
@@ -182,9 +207,9 @@
       position: absolute;
       bottom: 8px;
       left: 8px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(24, 24, 27, 0.8);
       backdrop-filter: blur(4px);
-      color: #e2e8f0;
+      color: #e4e4e7;
       font-size: 0.75rem;
       padding: 4px 8px;
       border-radius: 6px;
@@ -195,7 +220,7 @@
       grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
+      color: #71717a;
       font-size: 1.1rem;
     }
 
@@ -203,26 +228,24 @@
       max-width: 1200px;
       margin: 30px auto;
       text-align: center;
-      color: #94a3b8;
+      color: #a1a1aa;
       font-size: 0.95rem;
       display: none;
     }
 
-    /* ==============================================================
-       NOVA REGRA: NO CELULAR (ATÉ 600px) FORÇA 3 COLUNAS
-       ============================================================== */
+    /* 3 COLUNAS NO CELULAR */
     @media (max-width: 600px) {
       body {
-        padding: 10px 6px; /* Aproveita melhor a largura do celular */
+        padding: 10px 6px;
       }
 
       .gallery-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 colunas perfeitamente divididas */
-        gap: 5px; /* Espaço estreito estilo Instagram */
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
       }
 
       .gallery-item {
-        border-radius: 6px; /* Bordas proporcionais ao tamanho menor */
+        border-radius: 6px;
       }
 
       .folder-badge {
@@ -249,7 +272,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.88);
+      background: rgba(0, 0, 0, 0.92);
       backdrop-filter: blur(6px);
       display: none;
       align-items: center;
@@ -259,7 +282,8 @@
     }
 
     .modal-content {
-      background: #1e293b;
+      background: #27272a; /* Cinza escuro */
+      border: 1px solid #3f3f46;
       border-radius: 16px;
       padding: 20px;
       max-width: 500px;
@@ -292,7 +316,7 @@
       transform: translate(-50%, -50%);
       width: 160px;
       height: 210px;
-      border: 2px dashed rgba(255, 255, 255, 0.7);
+      border: 2px dashed #f87171; /* Guia vermelha suave */
       border-radius: 50%;
       pointer-events: none;
     }
@@ -312,7 +336,7 @@
       max-height: 75vh;
       border-radius: 8px;
       object-fit: contain;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
     }
 
     .lightbox-actions {
@@ -324,13 +348,13 @@
       justify-content: center;
     }
 
-    .photo-counter { color: #94a3b8; font-size: 0.95rem; }
+    .photo-counter { color: #a1a1aa; font-size: 0.95rem; }
 
     .nav-btn {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(30, 41, 59, 0.75);
+      background: rgba(39, 39, 42, 0.8);
       backdrop-filter: blur(4px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
@@ -347,7 +371,11 @@
       transition: all 0.2s;
     }
 
-    .nav-btn:hover { background: #2563eb; transform: translateY(-50%) scale(1.1); }
+    /* Hover das setas em Vermelho */
+    .nav-btn:hover { 
+      background: #dc2626; 
+      transform: translateY(-50%) scale(1.1); 
+    }
     .nav-btn-prev { left: 25px; }
     .nav-btn-next { right: 25px; }
 
@@ -355,7 +383,7 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      background: rgba(30, 41, 59, 0.8);
+      background: rgba(39, 39, 42, 0.85);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.1);
       width: 44px;
@@ -367,6 +395,10 @@
       align-items: center;
       justify-content: center;
       z-index: 1015;
+    }
+
+    .btn-close:hover {
+      background: #b91c1c;
     }
 
     @media (max-width: 600px) {
@@ -492,7 +524,6 @@
 
         let subpastas = dataPastas.files || [];
 
-        // Se não houver subpastas, usa a pasta raiz do evento
         if (subpastas.length === 0) {
           subpastas = [{ id: eventoAtual.folderId, name: 'Todas as Fotos' }];
         }
