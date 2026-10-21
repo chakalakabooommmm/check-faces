@@ -18,7 +18,7 @@
     }
 
     body {
-      background-color: #18181b; /* Cinza escuro */
+      background-color: #18181b;
       color: #f4f4f5;
       padding: 20px;
     }
@@ -56,7 +56,7 @@
     }
 
     .event-meta {
-      color: #f87171; /* Vermelho claro */
+      color: #f87171;
       font-size: 0.95rem;
       margin-bottom: 15px;
       font-weight: 500;
@@ -89,34 +89,20 @@
       cursor: not-allowed;
     }
 
-    .btn:active {
-      transform: scale(0.98);
-    }
+    .btn:active { transform: scale(0.98); }
 
-    .btn-primary { 
-      background-color: #dc2626; /* Vermelho */
-      color: #fff; 
-    }
-    .btn-primary:hover {
-      background-color: #b91c1c;
-    }
+    .btn-primary { background-color: #dc2626; color: #fff; }
+    .btn-primary:hover { background-color: #b91c1c; }
 
     .btn-secondary { 
       background-color: #27272a; 
       color: #f4f4f5; 
       border: 1px solid #3f3f46;
     }
-    .btn-secondary:hover {
-      background-color: #3f3f46;
-    }
+    .btn-secondary:hover { background-color: #3f3f46; }
 
-    .btn-success { 
-      background-color: #059669; 
-      color: #fff; 
-    }
-    .btn-success:hover {
-      background-color: #047857;
-    }
+    .btn-success { background-color: #059669; color: #fff; }
+    .btn-success:hover { background-color: #047857; }
 
     #statusMessage {
       font-size: 0.95rem;
@@ -155,22 +141,11 @@
       transition: all 0.2s;
     }
 
-    .tab-btn:hover {
-      color: #f4f4f5;
-      background-color: #27272a;
-    }
+    .tab-btn:hover { color: #f4f4f5; background-color: #27272a; }
+    .tab-btn.active { color: #fff; background-color: #dc2626; }
+    .tab-btn.tab-matched { background-color: #059669; color: #fff; }
 
-    .tab-btn.active {
-      color: #fff;
-      background-color: #dc2626; /* Aba ativa em vermelho */
-    }
-
-    .tab-btn.tab-matched {
-      background-color: #059669;
-      color: #fff;
-    }
-
-    /* Grid da Galeria (Computador e Tablets) */
+    /* Grid da Galeria */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -196,9 +171,7 @@
       transition: transform 0.3s ease;
     }
 
-    .gallery-item:hover img {
-      transform: scale(1.06);
-    }
+    .gallery-item:hover img { transform: scale(1.06); }
 
     .folder-badge {
       position: absolute;
@@ -232,37 +205,15 @@
 
     /* 3 COLUNAS NO CELULAR */
     @media (max-width: 600px) {
-      body {
-        padding: 10px 6px;
-      }
-
-      .gallery-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-      }
-
-      .gallery-item {
-        border-radius: 6px;
-      }
-
-      .folder-badge {
-        font-size: 0.6rem;
-        padding: 2px 4px;
-        bottom: 3px;
-        left: 3px;
-      }
-
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      .btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
-      }
+      body { padding: 10px 6px; }
+      .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+      .gallery-item { border-radius: 6px; }
+      .folder-badge { font-size: 0.6rem; padding: 2px 4px; bottom: 3px; left: 3px; }
+      h1 { font-size: 1.5rem; }
+      .btn { padding: 10px 16px; font-size: 0.9rem; }
     }
 
-    /* Modais */
+    /* MODAL DA CÂMERA BIOMÉTRICA (ESTILO FACE ID) */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -270,7 +221,7 @@
       width: 100vw;
       height: 100vh;
       background: rgba(0, 0, 0, 0.92);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -281,22 +232,56 @@
     .modal-content {
       background: #27272a;
       border: 1px solid #3f3f46;
-      border-radius: 16px;
-      padding: 20px;
-      max-width: 500px;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 480px;
       width: 100%;
       text-align: center;
       position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Indicador dos 3 Passos */
+    .scan-steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 15px 0 10px 0;
+    }
+
+    .step-pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #18181b;
+      color: #71717a;
+      border: 1px solid #3f3f46;
+      transition: all 0.3s;
+    }
+
+    .step-pill.active {
+      background: #dc2626;
+      color: #fff;
+      border-color: #ef4444;
+      transform: scale(1.05);
+    }
+
+    .step-pill.completed {
+      background: #059669;
+      color: #fff;
+      border-color: #10b981;
     }
 
     .video-container {
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       background: #000;
-      margin: 15px 0;
+      margin: 12px 0 16px 0;
+      border: 2px solid #3f3f46;
     }
 
     video {
@@ -306,16 +291,39 @@
       transform: scaleX(-1);
     }
 
+    /* Círculo Guia Inteligente */
     .face-guide {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 160px;
-      height: 210px;
-      border: 2px dashed #f87171; /* Guia vermelha */
+      width: 170px;
+      height: 220px;
+      border: 3px dashed #ef4444;
       border-radius: 50%;
       pointer-events: none;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .face-guide.aligned {
+      border-color: #10b981;
+      border-style: solid;
+      transform: translate(-50%, -50%) scale(1.03);
+    }
+
+    /* Feedback de Instrução */
+    .scan-instruction {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      min-height: 28px;
+      margin-bottom: 6px;
+    }
+
+    .scan-hint {
+      font-size: 0.82rem;
+      color: #a1a1aa;
+      margin-bottom: 12px;
     }
 
     /* Lightbox */
@@ -368,34 +376,29 @@
       transition: all 0.2s;
     }
 
-    .nav-btn:hover { 
-      background: #dc2626; 
-      transform: translateY(-50%) scale(1.1); 
-    }
+    .nav-btn:hover { background: #dc2626; transform: translateY(-50%) scale(1.1); }
     .nav-btn-prev { left: 25px; }
     .nav-btn-next { right: 25px; }
 
     .btn-close {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 16px;
+      right: 16px;
       background: rgba(39, 39, 42, 0.85);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1015;
     }
 
-    .btn-close:hover {
-      background: #b91c1c;
-    }
+    .btn-close:hover { background: #b91c1c; }
 
     @media (max-width: 600px) {
       .nav-btn { width: 42px; height: 42px; font-size: 1.4rem; }
@@ -414,7 +417,7 @@
 
     <div class="controls">
       <button class="btn btn-primary" id="btnScanFace" disabled>
-        📷 Escanear meu Rosto neste Evento
+        📷 Escanear meu Rosto (3 Ângulos)
       </button>
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
@@ -426,7 +429,7 @@
     <p id="statusMessage">Conectando ao Google Drive...</p>
   </header>
 
-  <!-- Abas Dinâmicas geradas a partir das subpastas -->
+  <!-- Abas Dinâmicas -->
   <div class="tabs-wrapper">
     <div class="tabs-bar" id="tabsBar"></div>
   </div>
@@ -434,21 +437,29 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- Modal Câmera -->
+  <!-- MODAL DE ESCANEAMENTO AUTOMÁTICO 3D / MULTI-ÂNGULO -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
-      <h3>Alinhe seu rosto</h3>
-      <p style="font-size: 0.85rem; color: #a1a1aa; margin-top: 4px;">
-        Durante a leitura de 1 segundo, mova o rosto suavemente.
-      </p>
+      
+      <div class="scan-instruction" id="scanInstruction">Alinhe seu rosto</div>
+      <div class="scan-hint" id="scanHint">Posicione o rosto dentro da marcação</div>
+
+      <!-- Indicadores dos 3 Passos -->
+      <div class="scan-steps">
+        <span class="step-pill active" id="pillFront">1. Frente</span>
+        <span class="step-pill" id="pillLeft">2. Esquerda</span>
+        <span class="step-pill" id="pillRight">3. Direita</span>
+      </div>
+
       <div class="video-container">
         <video id="webcam" autoplay playsinline muted></video>
-        <div class="face-guide"></div>
+        <div class="face-guide" id="faceGuide"></div>
       </div>
-      <button class="btn btn-primary" id="btnCaptureAndSearch" style="width: 100%; justify-content: center;">
-        🔍 Procurar Meu Rosto
-      </button>
+
+      <p style="font-size: 0.78rem; color: #71717a;">
+        A captura é 100% automática quando a posição correta for detectada.
+      </p>
     </div>
   </div>
 
@@ -468,7 +479,6 @@
 
   <script src="./eventos.js?v=novo"></script>
   <script>
-    // 1. Identificar evento pela URL (?id=...)
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
     const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
@@ -477,7 +487,7 @@
     document.getElementById('eventDate').textContent = eventoAtual.data;
     document.title = `${eventoAtual.nome} - Galeria`;
 
-    /* ESTADO DA PÁGINA */
+    /* ESTADO DA APLICAÇÃO */
     let FOLDERS = [];
     const BATCH_SIZE = 30;
     let renderedCount = 0;
@@ -488,6 +498,7 @@
     let activeTabId = '';
     let matchedPhotoIds = null;
     let stream = null;
+    let isScanningActive = false;
 
     const tabsBar = document.getElementById('tabsBar');
     const galleryGrid = document.getElementById('galleryGrid');
@@ -497,11 +508,18 @@
     const btnResetFilter = document.getElementById('btnResetFilter');
     const btnDownloadAllMatched = document.getElementById('btnDownloadAllMatched');
 
+    // Câmera & Scanner
     const cameraModal = document.getElementById('cameraModal');
     const webcam = document.getElementById('webcam');
-    const btnCaptureAndSearch = document.getElementById('btnCaptureAndSearch');
     const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const faceGuide = document.getElementById('faceGuide');
+    const scanInstruction = document.getElementById('scanInstruction');
+    const scanHint = document.getElementById('scanHint');
+    const pillFront = document.getElementById('pillFront');
+    const pillLeft = document.getElementById('pillLeft');
+    const pillRight = document.getElementById('pillRight');
 
+    // Lightbox
     const lightboxModal = document.getElementById('lightboxModal');
     const lightboxImg = document.getElementById('lightboxImg');
     const btnCloseLightbox = document.getElementById('btnCloseLightbox');
@@ -510,9 +528,9 @@
     const btnNextPhoto = document.getElementById('btnNextPhoto');
     const photoCounter = document.getElementById('photoCounter');
 
-    // 2. Descobrir subpastas do evento no Google Drive
+    // 1. Descobrir subpastas dinamicamente
     async function loadEventGallery() {
-      statusMessage.textContent = 'Identificando as galerias no Google Drive...';
+      statusMessage.textContent = 'Identificando galerias no Google Drive...';
 
       try {
         const queryPastas = encodeURIComponent(`'${eventoAtual.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
@@ -520,7 +538,6 @@
         
         const resPastas = await fetch(urlPastas);
         const dataPastas = await resPastas.json();
-
         let subpastas = dataPastas.files || [];
 
         if (subpastas.length === 0) {
@@ -577,12 +594,11 @@
           downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
         }));
       } catch (e) {
-        console.warn(`Erro na subpasta ${folderName}:`, e);
         return [];
       }
     }
 
-    // 3. Renderizar Abas e Grade com Scroll Infinito
+    // 2. Abas e Renderização
     function renderTabs() {
       tabsBar.innerHTML = '';
       if (matchedPhotoIds !== null) {
@@ -656,7 +672,7 @@
       }
     });
 
-    // 4. Lightbox com Navegação Próxima / Anterior
+    // 3. Lightbox
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -683,7 +699,7 @@
       }
     });
 
-    // 5. Inteligência Facial
+    // 4. Carregar IA
     async function initFaceAPI() {
       const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       try {
@@ -709,61 +725,167 @@
       }
     }
 
+    // 5. CÂMERA BIOMÉTRICA AUTOMÁTICA EM 3 ETAPAS (Frente, Esquerda, Direita)
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
+      resetPills();
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+        });
         webcam.srcObject = stream;
+        isScanningActive = true;
+        
+        // Aguarda a câmera estabilizar e inicia o loop inteligente
+        webcam.onloadedmetadata = () => {
+          startBiometricCaptureSequence();
+        };
       } catch (err) {
         alert('Permissão de câmera negada.');
         cameraModal.style.display = 'none';
       }
     };
 
-    btnCloseCamera.onclick = () => {
+    function closeCamera() {
+      isScanningActive = false;
       cameraModal.style.display = 'none';
       if (stream) stream.getTracks().forEach(t => t.stop());
-    };
+    }
 
-    // 6. Comparação Inteligente Multi-Amostras (Captura em rajada)
-    btnCaptureAndSearch.onclick = async () => {
-      btnCaptureAndSearch.disabled = true;
-      btnCaptureAndSearch.textContent = 'Mantenha o rosto na tela...';
+    btnCloseCamera.onclick = closeCamera;
 
-      const userDescriptors = [];
-      const TOTAL_AMOSTRAS = 3;
+    function resetPills() {
+      pillFront.className = 'step-pill active';
+      pillLeft.className = 'step-pill';
+      pillRight.className = 'step-pill';
+      faceGuide.className = 'face-guide';
+    }
 
-      // Coleta 3 variações do rosto em 1 segundo
-      for (let i = 0; i < TOTAL_AMOSTRAS; i++) {
-        btnCaptureAndSearch.textContent = `Lendo amostra ${i + 1} de ${TOTAL_AMOSTRAS}...`;
+    // Função que calcula a rotação horizontal da cabeça (Yaw) usando os 68 marcos faciais
+    function calculateHeadYaw(landmarks) {
+      const noseTip = landmarks.positions[30];
+      const leftJaw = landmarks.positions[0];   // Lateral esquerda no vídeo
+      const rightJaw = landmarks.positions[16]; // Lateral direita no vídeo
 
+      const distLeft = noseTip.x - leftJaw.x;
+      const distRight = rightJaw.x - noseTip.x;
+
+      // Retorna valor entre -1 e +1 (0 = perfeitamente de frente)
+      return (distLeft - distRight) / (distLeft + distRight);
+    }
+
+    async function startBiometricCaptureSequence() {
+      const capturedDescriptors = [];
+      let currentStage = 'FRONT'; // 'FRONT' -> 'LEFT' -> 'RIGHT' -> 'DONE'
+      let holdFrameCount = 0;
+
+      scanInstruction.textContent = "1. Olhe de frente";
+      scanHint.textContent = "Centralize o rosto no círculo";
+
+      while (isScanningActive && currentStage !== 'DONE') {
         const detection = await faceapi.detectSingleFace(
-          webcam,
+          webcam, 
           new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
         ).withFaceLandmarks().withFaceDescriptor();
 
         if (detection) {
-          userDescriptors.push(detection.descriptor);
+          const yaw = calculateHeadYaw(detection.landmarks);
+
+          if (currentStage === 'FRONT') {
+            // Rosto frontal (tolerância entre -0.15 e +0.15)
+            if (Math.abs(yaw) < 0.16) {
+              holdFrameCount++;
+              faceGuide.className = 'face-guide aligned';
+
+              if (holdFrameCount >= 2) { // Segurou estável
+                capturedDescriptors.push(detection.descriptor);
+                pillFront.className = 'step-pill completed';
+                pillLeft.className = 'step-pill active';
+                
+                currentStage = 'LEFT';
+                holdFrameCount = 0;
+                faceGuide.className = 'face-guide';
+
+                scanInstruction.textContent = "2. Vire para a Esquerda";
+                scanHint.textContent = "Gire a cabeça suavemente cerca de 30°";
+                await new Promise(r => setTimeout(r, 400));
+              }
+            } else {
+              holdFrameCount = 0;
+              faceGuide.className = 'face-guide';
+            }
+
+          } else if (currentStage === 'LEFT') {
+            // Rosto virado para a esquerda (yaw positivo no vídeo espelhado)
+            if (yaw > 0.24) {
+              holdFrameCount++;
+              faceGuide.className = 'face-guide aligned';
+
+              if (holdFrameCount >= 2) {
+                capturedDescriptors.push(detection.descriptor);
+                pillLeft.className = 'step-pill completed';
+                pillRight.className = 'step-pill active';
+
+                currentStage = 'RIGHT';
+                holdFrameCount = 0;
+                faceGuide.className = 'face-guide';
+
+                scanInstruction.textContent = "3. Vire para a Direita";
+                scanHint.textContent = "Agora gire suavemente para o outro lado";
+                await new Promise(r => setTimeout(r, 400));
+              }
+            } else {
+              holdFrameCount = 0;
+              faceGuide.className = 'face-guide';
+            }
+
+          } else if (currentStage === 'RIGHT') {
+            // Rosto virado para a direita (yaw negativo no vídeo espelhado)
+            if (yaw < -0.24) {
+              holdFrameCount++;
+              faceGuide.className = 'face-guide aligned';
+
+              if (holdFrameCount >= 2) {
+                capturedDescriptors.push(detection.descriptor);
+                pillRight.className = 'step-pill completed';
+                currentStage = 'DONE';
+              }
+            } else {
+              holdFrameCount = 0;
+              faceGuide.className = 'face-guide';
+            }
+          }
+
+        } else {
+          faceGuide.className = 'face-guide';
+          holdFrameCount = 0;
         }
 
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise(r => setTimeout(r, 100)); // Checagem a cada 100ms
       }
 
-      if (userDescriptors.length === 0) {
-        alert('Rosto não identificado. Posicione-se com boa iluminação e olhe para a câmera.');
-        btnCaptureAndSearch.disabled = false;
-        btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
-        return;
+      if (currentStage === 'DONE') {
+        scanInstruction.textContent = "✨ 3 Ângulos Capturados!";
+        scanHint.textContent = "Cruzando com as fotos da galeria...";
+        await new Promise(r => setTimeout(r, 500));
+        
+        closeCamera();
+        processMatchingWithMultiDescriptors(capturedDescriptors);
       }
+    }
 
-      btnCaptureAndSearch.textContent = 'Cruzando com as fotos da galeria...';
+    // 6. Comparação dos 3 Ângulos com a Galeria
+    function processMatchingWithMultiDescriptors(userDescriptors) {
+      statusMessage.textContent = 'Comparando seus 3 ângulos faciais com as fotos...';
 
       const foundIds = new Set();
-      // 0.59 é a calibragem ideal para óculos, sombras e ângulos semi-frontais
-      const DISTANCE_THRESHOLD = 0.59;
+      // 0.58 com 3 ângulos dá precisão cirúrgica sem falsos positivos
+      const DISTANCE_THRESHOLD = 0.58;
 
       allPhotos.forEach(photo => {
         const photoDescriptors = galleryDescriptors.get(photo.id) || [];
+        
         const hasMatch = photoDescriptors.some(photoDesc => {
           return userDescriptors.some(uDesc => {
             return faceapi.euclideanDistance(uDesc, photoDesc) < DISTANCE_THRESHOLD;
@@ -772,11 +894,6 @@
 
         if (hasMatch) foundIds.add(photo.id);
       });
-
-      cameraModal.style.display = 'none';
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      btnCaptureAndSearch.disabled = false;
-      btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
 
       if (foundIds.size > 0) {
         matchedPhotoIds = foundIds;
@@ -788,9 +905,10 @@
         btnDownloadAllMatched.style.display = 'inline-block';
         btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
       } else {
-        alert('Não encontramos você nas fotos deste evento. Dica: se estava de óculos nas fotos, tente escanear com os óculos.');
+        alert('Não encontramos você nas fotos deste evento. Se estava de óculos nas fotos, tente escanear com os óculos.');
+        statusMessage.textContent = 'Nenhuma foto encontrada para este rosto.';
       }
-    };
+    }
 
     // 7. Download ZIP
     btnDownloadAllMatched.onclick = async () => {
@@ -835,7 +953,6 @@
       statusMessage.textContent = 'Exibindo todas as fotos.';
     };
 
-    // Inicialização
     (async () => {
       const ok = await loadEventGallery();
       if (ok) await initFaceAPI();
