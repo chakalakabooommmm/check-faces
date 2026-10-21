@@ -1,0 +1,42 @@
+name: Robô Atualizador de Faces
+
+on:
+  schedule:
+    # Roda sozinho a cada 2 horas (caso você tenha adicionado fotos)
+    - cron: '0 */2 * * *'
+  # Permite que você clique em um botão para rodar quando quiser
+  workflow_dispatch:
+  # Permite que um webhook externo dispare o robô na hora
+  repository_dispatch:
+    types: [drive-upload]
+
+permissions:
+  contents: write
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar bibliotecas
+        run: npm install
+
+      - name: Rodar inteligência artificial
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: node sync-faces.js
+
+      - name: Salvar alterações no faces.json
+        run: |
+          git config --global user.name "Robô das Fotos"
+          git config --global user.email "bot@galeria.com"
+          git add faces.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "faces.json atualizado automaticamente [skip ci]" && git push)
