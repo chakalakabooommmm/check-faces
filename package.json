@@ -1,0 +1,11 @@
+{
+  "name": "galeria-inteligente",
+  "version": "1.0.0",
+  "scripts": {
+    "sync": "node sync-faces.js"
+  },
+  "dependencies": {
+    "@vladmandic/face-api": "^1.7.12",
+    "@tensorflow/tfjs": "^4.20.0"
+  }
+}
