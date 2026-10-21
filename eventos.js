@@ -29,7 +29,7 @@ const EVENTOS = [
     data: '20 de Novembro, 2026',
     capa: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
     folders: [
-      { id: 'red carpet', name: '🎓 Colação',   folderId: '1h7mKXUEA6wsdD8Mf-3n7B9V-xfnM0Pg-' },
+      { id: 'red carpet', name: '🎓 Colação',   folderId: '1d-0Yqg7rlyjj42e9IHewVNqU9QJxjpsK' },
       
     ]
   }
