@@ -4,7 +4,7 @@ const path = require('path');
 const tf = require('@tensorflow/tfjs-node');
 const faceapi = require('@vladmandic/face-api/dist/face-api.node.js');
 
-// 1. Carrega o eventos.js
+// 1. Carrega as configurações do eventos.js
 let EVENTOS = [];
 let CONFIG_KEY = '';
 
@@ -26,9 +26,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('🚀 Iniciando o robô de mapeamento facial...');
+  console.log('🚀 Iniciando o robô com detecção de alta sensibilidade...');
 
-  // 2. Carrega o faces.json existente
+  // 2. Carrega o faces.json existente (incremental)
   let facesDb = {};
   if (fs.existsSync(JSON_FILE)) {
     try {
@@ -50,7 +50,6 @@ async function main() {
 
     console.log(`\n📂 Verificando evento: "${evento.nome}"...`);
 
-    // Busca as subpastas que existem dentro da pasta do evento
     const queryPastas = encodeURIComponent(`'${evento.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
     const urlPastas = `https://www.googleapis.com/drive/v3/files?q=${queryPastas}&fields=files(id,name)&key=${GOOGLE_API_KEY}`;
     
@@ -63,7 +62,6 @@ async function main() {
       console.error(`Erro ao buscar subpastas do evento "${evento.nome}":`, err.message);
     }
 
-    // Se não houver subpastas, busca fotos soltas na pasta do evento
     if (subpastas.length === 0) {
       subpastas = [{ id: evento.folderId, name: 'Geral' }];
     }
@@ -99,7 +97,7 @@ async function main() {
     }
   }
 
-  // Remove eventuais fotos repetidas
+  // Remove fotos duplicadas
   const uniquePhotosMap = new Map();
   allDrivePhotos.forEach(p => uniquePhotosMap.set(p.id, p));
   const uniquePhotos = Array.from(uniquePhotosMap.values());
@@ -114,39 +112,51 @@ async function main() {
     return;
   }
 
-  // 5. Carrega os modelos neurais
+  // 5. Carrega as Redes Neurais
   const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
   console.log('\n🧠 Carregando IA facial...');
   await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
   await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
   await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
-  // 6. Processa cada foto nova
+  // 6. Configura o detector com sensibilidade ampliada (minConfidence: 0.35)
+  // Isso permite detectar pessoas de óculos, rindo ou em ângulos semi-frontais
+  const ssdOptions = new faceapi.SsdMobilenetv1Options({ 
+    minConfidence: 0.35, 
+    maxResults: 100 
+  });
+
   let count = 0;
   for (const file of newPhotos) {
     count++;
-    console.log(`[${count}/${newPhotos.length}] Analisando rosto em: ${file.name}`);
+    console.log(`[${count}/${newPhotos.length}] Analisando faces em: ${file.name}`);
 
     try {
-      const resImg = await fetch(`https://lh3.googleusercontent.com/d/${file.id}=w800`);
+      // Baixa com resolução w1200 para capturar detalhes nítidos dos olhos e armação dos óculos
+      const resImg = await fetch(`https://lh3.googleusercontent.com/d/${file.id}=w1200`);
       const buffer = await resImg.arrayBuffer();
 
       const tensor = tf.node.decodeImage(new Uint8Array(buffer), 3);
-      const detections = await faceapi.detectAllFaces(tensor).withFaceLandmarks().withFaceDescriptors();
+      const detections = await faceapi.detectAllFaces(tensor, ssdOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+      
       tensor.dispose();
 
+      console.log(`   └ ${detections.length} rosto(s) detectado(s).`);
       facesDb[file.id] = detections.map(d => Array.from(d.descriptor));
     } catch (err) {
       console.warn(`⚠️ Não foi possível processar "${file.name}":`, err.message);
     }
 
+    // Salva o progresso a cada 20 fotos
     if (count % 20 === 0) {
       fs.writeFileSync(JSON_FILE, JSON.stringify(facesDb), 'utf8');
       console.log(`💾 Progresso salvo (${count}/${newPhotos.length})...`);
     }
   }
 
-  // 7. Salva o resultado final
+  // 7. Salva o resultado final no faces.json
   fs.writeFileSync(JSON_FILE, JSON.stringify(facesDb), 'utf8');
   console.log(`\n🎉 Concluído com sucesso! faces.json atualizado com ${Object.keys(facesDb).length} fotos no total.`);
 }
