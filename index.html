@@ -7,7 +7,7 @@
   
   <!-- Face-API.js -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <!-- JSZip para empacotar as fotos em .zip -->
+  <!-- JSZip -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -137,7 +137,7 @@
       color: #fff;
     }
 
-    /* Grid da Galeria (Thumbs Quadrados) */
+    /* Grid da Galeria */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -186,6 +186,16 @@
       padding: 60px 20px;
       color: #64748b;
       font-size: 1.1rem;
+    }
+
+    /* Indicador do Scroll Infinito */
+    #scrollLoader {
+      max-width: 1200px;
+      margin: 30px auto;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      display: none;
     }
 
     /* Modais */
@@ -243,7 +253,7 @@
       pointer-events: none;
     }
 
-    /* Lightbox e Navegação Lateral */
+    /* Lightbox */
     .lightbox-content {
       max-width: 85vw;
       max-height: 90vh;
@@ -356,7 +366,6 @@
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
       </button>
-      <!-- NOVO BOTÃO DE DOWNLOAD EM LOTE -->
       <button class="btn btn-success" id="btnDownloadAllMatched" style="display: none;">
         📦 Baixar Todas as Minhas Fotos (.zip)
       </button>
@@ -371,6 +380,9 @@
 
   <!-- Grade de Fotos -->
   <main class="gallery-grid" id="galleryGrid"></main>
+
+  <!-- Elemento de Scroll Infinito -->
+  <div id="scrollLoader">Carregando mais fotos...</div>
 
   <!-- Modal Câmera -->
   <div class="modal-overlay" id="cameraModal">
@@ -390,7 +402,7 @@
     </div>
   </div>
 
-  <!-- Modal Lightbox (Visualizar e Baixar) -->
+  <!-- Modal Lightbox -->
   <div class="modal-overlay" id="lightboxModal">
     <button class="btn-close" id="btnCloseLightbox" title="Fechar (Esc)">&times;</button>
     
@@ -413,18 +425,18 @@
     /* ====================================================================
        CONFIGURAÇÃO: COLOQUE SUA CHAVE E SUAS PASTAS AQUI
        ==================================================================== */
-    const GOOGLE_API_KEY = 'AIzaSyCP2F0q6eyyFskTGj3jcjkhdfLP_11Wvz8';
+    const GOOGLE_API_KEY = 'SUA_CHAVE_API_AQUI';
 
-    // Adicione quantas pastas quiser! Cada uma vira uma aba na tela.
     const FOLDERS = [
-      { id: 'redcarpet',   name: 'Red Carpet',    folderId: '1h7mKXUEA6wsdD8Mf-3n7B9V-xfnM0Pg-' },
-      { id: 'coquetel',  name: 'Coquetel',   folderId: '1jx6P6ZL852ti_0v3CIozJx4IjF98BQo9' },
-      { id: 'exibição', name: 'Exibição', folderId: '1whd1ealZ21Yl_W1z3kw-n_pvCPY000pJ' }
+      { id: 'festa',   name: '🎉 Festa',   folderId: 'COLE_O_ID_DA_SUA_PASTA_1_AQUI' },
+      { id: 'ensaio',  name: '📸 Ensaio',  folderId: 'COLE_O_ID_DA_SUA_PASTA_2_AQUI' }
     ];
 
     /* ====================================================================
-       ESTADO DA APLICAÇÃO
+       ESTADO DA APLICAÇÃO E ROLAGEM INFINITA
        ==================================================================== */
+    const BATCH_SIZE = 30;           // Quantidade de fotos por bloco no scroll
+    let renderedCount = 0;           // Quantas fotos já foram desenhadas na tela
     let allPhotos = [];
     let currentFilteredPhotos = [];
     let currentPhotoIndex = 0;
@@ -434,6 +446,7 @@
 
     const tabsBar = document.getElementById('tabsBar');
     const galleryGrid = document.getElementById('galleryGrid');
+    const scrollLoader = document.getElementById('scrollLoader');
     const statusMessage = document.getElementById('statusMessage');
     const btnScanFace = document.getElementById('btnScanFace');
     const btnResetFilter = document.getElementById('btnResetFilter');
@@ -454,17 +467,26 @@
 
     let stream = null;
 
-    // 1. Carregar fotos do Google Drive
+    // 1. Carregar fotos do Google Drive sem o limite de 100 fotos (com paginação)
     async function fetchPhotosFromDriveFolder(folder) {
       const query = encodeURIComponent(`'${folder.folderId}' in parents and mimeType contains 'image/' and trashed = false`);
-      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&key=${GOOGLE_API_KEY}`;
+      let allFiles = [];
+      let pageToken = '';
 
       try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
+        do {
+          const pageParam = pageToken ? `&pageToken=${pageToken}` : '';
+          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
 
-        return (data.files || []).map(file => ({
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+
+          if (data.files) allFiles.push(...data.files);
+          pageToken = data.nextPageToken; // Se houver mais de 1000 fotos, pega a próxima página
+        } while (pageToken);
+
+        return allFiles.map(file => ({
           id: file.id,
           name: file.name,
           folderId: folder.id,
@@ -491,7 +513,7 @@
       }
 
       renderTabs();
-      renderGallery();
+      setupGalleryView();
       return true;
     }
 
@@ -506,7 +528,7 @@
         matchedBtn.onclick = () => {
           activeTabId = 'matched';
           renderTabs();
-          renderGallery();
+          setupGalleryView();
         };
         tabsBar.appendChild(matchedBtn);
       }
@@ -523,15 +545,16 @@
         btn.onclick = () => {
           activeTabId = folder.id;
           renderTabs();
-          renderGallery();
+          setupGalleryView();
         };
         tabsBar.appendChild(btn);
       });
     }
 
-    // 3. Renderizar Galeria
-    function renderGallery() {
+    // 3. Configura a lista de fotos da aba e inicia a renderização com Scroll Infinito
+    function setupGalleryView() {
       galleryGrid.innerHTML = '';
+      renderedCount = 0;
 
       if (activeTabId === 'matched') {
         currentFilteredPhotos = allPhotos.filter(p => matchedPhotoIds.has(p.id));
@@ -544,22 +567,53 @@
 
       if (currentFilteredPhotos.length === 0) {
         galleryGrid.innerHTML = '<div class="empty-message">Nenhuma foto para exibir nesta aba.</div>';
+        scrollLoader.style.display = 'none';
         return;
       }
 
-      currentFilteredPhotos.forEach((photo, index) => {
+      // Renderiza o primeiro bloco de fotos
+      renderNextBatch();
+    }
+
+    // Adiciona o próximo bloco de fotos na grade
+    function renderNextBatch() {
+      if (renderedCount >= currentFilteredPhotos.length) {
+        scrollLoader.style.display = 'none';
+        return;
+      }
+
+      const nextBatch = currentFilteredPhotos.slice(renderedCount, renderedCount + BATCH_SIZE);
+
+      nextBatch.forEach((photo, i) => {
+        const globalIndex = renderedCount + i;
         const item = document.createElement('div');
         item.className = 'gallery-item';
         item.innerHTML = `
           <img src="${photo.thumbUrl}" alt="${photo.name}" loading="lazy">
           ${activeTabId === 'matched' ? `<span class="folder-badge">${photo.folderName}</span>` : ''}
         `;
-        item.onclick = () => openLightbox(index);
+        item.onclick = () => openLightbox(globalIndex);
         galleryGrid.appendChild(item);
       });
+
+      renderedCount += nextBatch.length;
+
+      // Se ainda houver fotos restantes, mostra aviso de carregamento
+      if (renderedCount < currentFilteredPhotos.length) {
+        scrollLoader.style.display = 'block';
+      } else {
+        scrollLoader.style.display = 'none';
+      }
     }
 
-    // 4. Lightbox com Próxima / Anterior
+    // Detecta quando o usuário rolou até o fim da página
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+        renderNextBatch();
+      }
+    });
+
+    // 4. Lightbox com Navegação
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -704,10 +758,9 @@
         matchedPhotoIds = foundIds;
         activeTabId = 'matched';
         renderTabs();
-        renderGallery();
+        setupGalleryView();
         statusMessage.textContent = `Sucesso! Encontramos ${foundIds.size} foto(s) onde você aparece.`;
         
-        // Exibe os botões de controle
         btnResetFilter.style.display = 'inline-block';
         btnDownloadAllMatched.style.display = 'inline-block';
         btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
@@ -716,7 +769,7 @@
       }
     };
 
-    // 8. Baixar Todas as Fotos Encontradas em arquivo .ZIP
+    // 8. Baixar Todas as Fotos Encontradas (.ZIP)
     btnDownloadAllMatched.onclick = async () => {
       if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
 
@@ -735,23 +788,20 @@
           btnDownloadAllMatched.textContent = `Baixando ${baixadas}/${total}...`;
 
           try {
-            // Baixa a imagem em alta resolução
             const response = await fetch(photo.fullUrl);
             const blob = await response.blob();
             
-            // Define o nome do arquivo dentro do zip
             const extension = photo.name.includes('.') ? '' : '.jpg';
             const fileName = `${photo.folderName}_${photo.name}${extension}`;
             zip.file(fileName, blob);
           } catch (e) {
-            console.warn(`Erro ao baixar foto individual: ${photo.name}`, e);
+            console.warn(`Erro ao baixar: ${photo.name}`, e);
           }
         }
 
         btnDownloadAllMatched.textContent = 'Compactando arquivo .zip...';
         const zipBlob = await zip.generateAsync({ type: 'blob' });
 
-        // Dispara o download automático do arquivo ZIP
         const link = document.createElement('a');
         link.href = URL.createObjectURL(zipBlob);
         link.download = `minhas_fotos_galeria.zip`;
@@ -768,7 +818,7 @@
 
       } catch (err) {
         console.error(err);
-        alert('Ocorreu um erro ao gerar o arquivo ZIP. Tente baixar individualmente.');
+        alert('Ocorreu um erro ao gerar o arquivo ZIP.');
         btnDownloadAllMatched.disabled = false;
         btnDownloadAllMatched.textContent = originalText;
       }
@@ -780,11 +830,11 @@
       btnResetFilter.style.display = 'none';
       btnDownloadAllMatched.style.display = 'none';
       renderTabs();
-      renderGallery();
+      setupGalleryView();
       statusMessage.textContent = 'Exibindo todas as fotos.';
     };
 
-    // Inicialização da Página
+    // Inicialização
     (async () => {
       const ok = await loadAllGalleries();
       if (ok) {
