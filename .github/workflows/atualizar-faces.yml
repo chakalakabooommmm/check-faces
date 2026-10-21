@@ -2,16 +2,21 @@ name: Robô Atualizador de Faces
 
 on:
   schedule:
-    # Roda sozinho a cada 2 horas (caso você tenha adicionado fotos)
+    # Roda a cada 2 horas como garantia de sincronia
     - cron: '0 */2 * * *'
-  # Permite que você clique em um botão para rodar quando quiser
+  # Permite rodar manualmente pelo painel do GitHub
   workflow_dispatch:
-  # Permite que um webhook externo dispare o robô na hora
+  # Disparado na hora pelo Google Apps Script
   repository_dispatch:
     types: [drive-upload]
 
 permissions:
   contents: write
+
+# Garante que apenas um robô rode por vez, enfileirando o próximo se necessário
+concurrency:
+  group: sync-faces
+  cancel-in-progress: false
 
 jobs:
   sincronizar:
@@ -20,14 +25,17 @@ jobs:
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Configurar Node.js
+      - name: Configurar Node.js (v20 LTS para compatibilidade com TensorFlow)
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+          cache: 'npm'
 
       - name: Instalar bibliotecas
-        run: npm install
+        run: npm ci || npm install
 
       - name: Rodar inteligência artificial
         env:
@@ -39,4 +47,12 @@ jobs:
           git config --global user.name "Robô das Fotos"
           git config --global user.email "bot@galeria.com"
           git add faces.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "faces.json atualizado automaticamente [skip ci]" && git push)
+          
+          # Verifica se o faces.json realmente mudou antes de tentar comitar
+          if ! git diff --staged --quiet; then
+            git commit -m "faces.json atualizado automaticamente [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "Nenhuma mudança no faces.json para enviar."
+          fi
