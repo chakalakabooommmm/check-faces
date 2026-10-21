@@ -55,7 +55,6 @@
       margin-bottom: 6px;
     }
 
-    /* Texto de destaque em Vermelho */
     .event-meta {
       color: #f87171; /* Vermelho claro */
       font-size: 0.95rem;
@@ -94,13 +93,12 @@
       transform: scale(0.98);
     }
 
-    /* Botão Principal em Vermelho */
     .btn-primary { 
       background-color: #dc2626; /* Vermelho */
       color: #fff; 
     }
     .btn-primary:hover {
-      background-color: #b91c1c; /* Vermelho escuro */
+      background-color: #b91c1c;
     }
 
     .btn-secondary { 
@@ -162,10 +160,9 @@
       background-color: #27272a;
     }
 
-    /* Aba Ativa em Vermelho */
     .tab-btn.active {
       color: #fff;
-      background-color: #dc2626; /* Vermelho */
+      background-color: #dc2626; /* Aba ativa em vermelho */
     }
 
     .tab-btn.tab-matched {
@@ -173,7 +170,7 @@
       color: #fff;
     }
 
-    /* Grid da Galeria */
+    /* Grid da Galeria (Computador e Tablets) */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -207,7 +204,7 @@
       position: absolute;
       bottom: 8px;
       left: 8px;
-      background: rgba(24, 24, 27, 0.8);
+      background: rgba(24, 24, 27, 0.85);
       backdrop-filter: blur(4px);
       color: #e4e4e7;
       font-size: 0.75rem;
@@ -282,7 +279,7 @@
     }
 
     .modal-content {
-      background: #27272a; /* Cinza escuro */
+      background: #27272a;
       border: 1px solid #3f3f46;
       border-radius: 16px;
       padding: 20px;
@@ -316,7 +313,7 @@
       transform: translate(-50%, -50%);
       width: 160px;
       height: 210px;
-      border: 2px dashed #f87171; /* Guia vermelha suave */
+      border: 2px dashed #f87171; /* Guia vermelha */
       border-radius: 50%;
       pointer-events: none;
     }
@@ -371,7 +368,6 @@
       transition: all 0.2s;
     }
 
-    /* Hover das setas em Vermelho */
     .nav-btn:hover { 
       background: #dc2626; 
       transform: translateY(-50%) scale(1.1); 
@@ -430,7 +426,7 @@
     <p id="statusMessage">Conectando ao Google Drive...</p>
   </header>
 
-  <!-- Abas Dinâmicas -->
+  <!-- Abas Dinâmicas geradas a partir das subpastas -->
   <div class="tabs-wrapper">
     <div class="tabs-bar" id="tabsBar"></div>
   </div>
@@ -443,6 +439,9 @@
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
       <h3>Alinhe seu rosto</h3>
+      <p style="font-size: 0.85rem; color: #a1a1aa; margin-top: 4px;">
+        Durante a leitura de 1 segundo, mova o rosto suavemente.
+      </p>
       <div class="video-container">
         <video id="webcam" autoplay playsinline muted></video>
         <div class="face-guide"></div>
@@ -684,7 +683,7 @@
       }
     });
 
-    // 5. Inteligência Facial e Câmera
+    // 5. Inteligência Facial
     async function initFaceAPI() {
       const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       try {
@@ -726,26 +725,52 @@
       if (stream) stream.getTracks().forEach(t => t.stop());
     };
 
+    // 6. Comparação Inteligente Multi-Amostras (Captura em rajada)
     btnCaptureAndSearch.onclick = async () => {
       btnCaptureAndSearch.disabled = true;
-      btnCaptureAndSearch.textContent = 'Buscando seu rosto...';
+      btnCaptureAndSearch.textContent = 'Mantenha o rosto na tela...';
 
-      const detection = await faceapi.detectSingleFace(webcam).withFaceLandmarks().withFaceDescriptor();
-      if (!detection) {
-        alert('Rosto não identificado. Posicione-se em local iluminado.');
+      const userDescriptors = [];
+      const TOTAL_AMOSTRAS = 3;
+
+      // Coleta 3 variações do rosto em 1 segundo
+      for (let i = 0; i < TOTAL_AMOSTRAS; i++) {
+        btnCaptureAndSearch.textContent = `Lendo amostra ${i + 1} de ${TOTAL_AMOSTRAS}...`;
+
+        const detection = await faceapi.detectSingleFace(
+          webcam,
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+          userDescriptors.push(detection.descriptor);
+        }
+
+        await new Promise(r => setTimeout(r, 250));
+      }
+
+      if (userDescriptors.length === 0) {
+        alert('Rosto não identificado. Posicione-se com boa iluminação e olhe para a câmera.');
         btnCaptureAndSearch.disabled = false;
         btnCaptureAndSearch.textContent = '🔍 Procurar Meu Rosto';
         return;
       }
 
-      const userDescriptor = detection.descriptor;
+      btnCaptureAndSearch.textContent = 'Cruzando com as fotos da galeria...';
+
       const foundIds = new Set();
-      const DISTANCE_THRESHOLD = 0.55;
+      // 0.59 é a calibragem ideal para óculos, sombras e ângulos semi-frontais
+      const DISTANCE_THRESHOLD = 0.59;
 
       allPhotos.forEach(photo => {
-        const descriptors = galleryDescriptors.get(photo.id) || [];
-        const match = descriptors.some(desc => faceapi.euclideanDistance(userDescriptor, desc) < DISTANCE_THRESHOLD);
-        if (match) foundIds.add(photo.id);
+        const photoDescriptors = galleryDescriptors.get(photo.id) || [];
+        const hasMatch = photoDescriptors.some(photoDesc => {
+          return userDescriptors.some(uDesc => {
+            return faceapi.euclideanDistance(uDesc, photoDesc) < DISTANCE_THRESHOLD;
+          });
+        });
+
+        if (hasMatch) foundIds.add(photo.id);
       });
 
       cameraModal.style.display = 'none';
@@ -763,11 +788,11 @@
         btnDownloadAllMatched.style.display = 'inline-block';
         btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
       } else {
-        alert('Não encontramos você nas fotos deste evento.');
+        alert('Não encontramos você nas fotos deste evento. Dica: se estava de óculos nas fotos, tente escanear com os óculos.');
       }
     };
 
-    // 6. Download ZIP
+    // 7. Download ZIP
     btnDownloadAllMatched.onclick = async () => {
       if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
       const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
