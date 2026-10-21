@@ -1,5 +1,5 @@
 // eventos.js
-const GOOGLE_API_KEY = 'SUA_CHAVE_API_AQUI';
+const GOOGLE_API_KEY = 'AIzaSyCP2F0q6eyyFskTGj3jcjkhdfLP_11Wvz8';
 
 const EVENTOS = [
   {
