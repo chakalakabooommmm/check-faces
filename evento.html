@@ -18,7 +18,7 @@
     }
 
     body {
-      background-color: #18181b;
+      background-color: #18181b; /* Cinza escuro */
       color: #f4f4f5;
       padding: 20px;
     }
@@ -145,7 +145,7 @@
     .tab-btn.active { color: #fff; background-color: #dc2626; }
     .tab-btn.tab-matched { background-color: #059669; color: #fff; }
 
-    /* Grid da Galeria */
+    /* Grid da Galeria (Computador e Tablet) */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -824,9 +824,9 @@
 
     async function startBiometricCaptureSequence() {
       const capturedDescriptors = [];
-      let currentStage = 'FRONT'; 
+      let currentStage = 'FRONT';
       let stableFrames = 0;
-      const REQUIRED_STABLE_FRAMES = 8; // ~800ms de cabeça estável
+      const REQUIRED_STABLE_FRAMES = 8;
       let prevNose = null;
 
       scanInstruction.textContent = "1. Olhe de frente";
@@ -929,50 +929,63 @@
       }
     }
 
-    // 6. VALIDAÇÃO BIOMÉTRICA CRUZADA (Corta o intruso e aceita foto de baixo para cima)
+    // 6. VALIDAÇÃO BIOMÉTRICA CRUZADA COM AUDITORIA DE NOTAS NO CONSOLE (F12)
     function processMatchingWithMultiDescriptors(userDescriptors) {
-      statusMessage.textContent = 'Aplicando validação biométrica inteligente...';
+      statusMessage.textContent = 'Comparando biometria com as fotos...';
 
       const foundIds = new Set();
-      const uFront = userDescriptors[0]; // Sua foto frontal
+      const uFront = userDescriptors[0]; // Sua foto de frente
       const uLeft  = userDescriptors[1]; // Sua foto de lado esquerdo
+
+      console.clear();
+      console.log('====================================================');
+      console.log('📊 AUDITORIA DE PONTUAÇÃO (DISTÂNCIA EUCLIDIANA)');
+      console.log('Regra: Quanto MENOR o número, mais parecida a pessoa é.');
+      console.log('====================================================');
 
       allPhotos.forEach(photo => {
         const photoDescriptors = galleryDescriptors.get(photo.id) || [];
         
-        let isMatch = false;
+        let menorDistancia = 999;
+        let dFrenteMin = 999;
+        let dLadoMin = 999;
 
         photoDescriptors.forEach(pDesc => {
           const dFront = faceapi.euclideanDistance(uFront, pDesc);
           const dLeft  = uLeft ? faceapi.euclideanDistance(uLeft, pDesc) : 999;
-          
+
+          if (dFront < dFrenteMin) dFrenteMin = dFront;
+          if (dLeft < dLadoMin) dLadoMin = dLeft;
+
           const minD = Math.min(dFront, dLeft);
-          const maxD = Math.max(dFront, dLeft);
-
-          // 1. Certeza Absoluta: distância muito baixa em qualquer pose
-          if (minD < 0.48) {
-            isMatch = true;
-          } 
-          // 2. Zona Moderada (0.48 até 0.52): o outro ângulo precisa ser consistente (< 0.62)
-          else if (minD <= 0.52 && maxD < 0.62) {
-            isMatch = true;
-          }
-          // 3. Zona de Ângulo Difícil (de baixo para cima / 0.52 até 0.55):
-          // Só aprova se ambos os ângulos forem coerentes (< 0.59), eliminando intrusos
-          else if (minD <= 0.55 && maxD < 0.59) {
-            isMatch = true;
-          }
-
-          // Imprime no console (F12) para você acompanhar a nota exata de cada foto
-          if (minD < 0.62) {
-            console.log(`Foto: ${photo.name} | dFrente: ${dFront.toFixed(3)} | dLado: ${dLeft.toFixed(3)} | Veredito: ${isMatch ? '✅ Aprovada' : '❌ Rejeitada (Intruso)'}`);
-          }
+          if (minD < menorDistancia) menorDistancia = minD;
         });
+
+        // Critérios de aprovação inteligentes
+        let isMatch = false;
+        if (menorDistancia < 0.48) {
+          isMatch = true;
+        } else if (menorDistancia <= 0.52 && Math.max(dFrenteMin, dLadoMin) < 0.62) {
+          isMatch = true;
+        } else if (menorDistancia <= 0.55 && Math.max(dFrenteMin, dLadoMin) < 0.59) {
+          isMatch = true;
+        }
+
+        // Mostra no Console todas as fotos que tiveram proximidade (< 0.70)
+        if (menorDistancia < 0.70) {
+          console.log(
+            `📸 ${photo.name} | Menor: ${menorDistancia.toFixed(3)} ` +
+            `(Frente: ${dFrenteMin.toFixed(3)} | Lado: ${dLadoMin.toFixed(3)}) ` +
+            `-> ${isMatch ? '✅ APROVADA' : '❌ REJEITADA'}`
+          );
+        }
 
         if (isMatch) {
           foundIds.add(photo.id);
         }
       });
+
+      console.log('====================================================');
 
       if (foundIds.size > 0) {
         matchedPhotoIds = foundIds;
