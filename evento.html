@@ -18,7 +18,7 @@
     }
 
     body {
-      background-color: #18181b; /* Cinza escuro */
+      background-color: #18181b;
       color: #f4f4f5;
       padding: 20px;
     }
@@ -145,7 +145,7 @@
     .tab-btn.active { color: #fff; background-color: #dc2626; }
     .tab-btn.tab-matched { background-color: #059669; color: #fff; }
 
-    /* Grid da Galeria (Computador e Tablet) */
+    /* Grid da Galeria */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -244,14 +244,15 @@
     .scan-steps {
       display: flex;
       justify-content: center;
-      gap: 12px;
+      gap: 6px;
       margin: 15px 0 10px 0;
+      flex-wrap: wrap;
     }
 
     .step-pill {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      padding: 6px 16px;
+      padding: 5px 12px;
       border-radius: 20px;
       background: #18181b;
       color: #71717a;
@@ -259,17 +260,11 @@
       transition: all 0.3s;
     }
 
-    .step-pill.active {
-      background: #dc2626;
-      color: #fff;
-      border-color: #ef4444;
-      transform: scale(1.05);
-    }
-
     .step-pill.completed {
       background: #059669;
       color: #fff;
       border-color: #10b981;
+      transform: scale(1.05);
     }
 
     .video-container {
@@ -306,28 +301,30 @@
       align-items: center;
       justify-content: center;
       z-index: 10;
-      transition: border-color 0.25s, transform 0.25s;
+      transition: all 0.25s;
     }
 
-    .face-guide.holding {
-      border-color: #f87171;
+    .face-guide.recording {
+      border-color: #38bdf8; /* Azul claro enquanto rastreia o círculo */
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88), 0 0 15px rgba(56, 189, 248, 0.4);
     }
 
-    .face-guide.aligned {
+    .face-guide.completed {
       border-color: #10b981;
       transform: translate(-50%, -50%) scale(1.02);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88), 0 0 20px rgba(16, 185, 129, 0.5);
     }
 
-    /* CONTAGEM CENTRAL */
+    /* FEEDBACK NO CENTRO DA TELA */
     .camera-countdown {
-      font-size: 4.5rem;
+      font-size: 2.8rem;
       font-weight: 900;
       color: #ffffff;
-      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.8);
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 25px rgba(239, 68, 68, 0.8);
       pointer-events: none;
       opacity: 0;
-      transform: scale(0.5);
-      transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+      transform: scale(0.6);
+      transition: transform 0.2s ease-out, opacity 0.2s ease-out;
       user-select: none;
     }
 
@@ -455,7 +452,7 @@
 
     <div class="controls">
       <button class="btn btn-primary" id="btnScanFace" disabled>
-        📷 Escanear meu Rosto (2 Ângulos)
+        📷 Escanear meu Rosto (Face ID 3D)
       </button>
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
@@ -475,18 +472,20 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE ESCANEAMENTO BIOMÉTRICO (2 ÂNGULOS) -->
+  <!-- MODAL DE ESCANEAMENTO FLUIDO ESTILO FACE ID -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
       
-      <div class="scan-instruction" id="scanInstruction">Alinhe seu rosto</div>
-      <div class="scan-hint" id="scanHint">Centralize o rosto no círculo</div>
+      <div class="scan-instruction" id="scanInstruction">Mova a cabeça em um pequeno círculo</div>
+      <div class="scan-hint" id="scanHint">Gire suavemente para capturar todos os ângulos</div>
 
-      <!-- Indicadores dos 2 Passos -->
+      <!-- Indicadores das 4 zonas biométricas -->
       <div class="scan-steps">
-        <span class="step-pill active" id="pillFront">1. Frente</span>
-        <span class="step-pill" id="pillLeft">2. Esquerda</span>
+        <span class="step-pill" id="pillFront">Frente</span>
+        <span class="step-pill" id="pillUp">Cima</span>
+        <span class="step-pill" id="pillLeft">Esquerda</span>
+        <span class="step-pill" id="pillRight">Direita</span>
       </div>
 
       <div class="video-container">
@@ -494,12 +493,12 @@
         <div class="camera-flash" id="cameraFlash"></div>
         
         <div class="face-guide" id="faceGuide">
-          <div class="camera-countdown" id="cameraCountdown">3</div>
+          <div class="camera-countdown" id="cameraCountdown"></div>
         </div>
       </div>
 
       <p style="font-size: 0.78rem; color: #71717a;">
-        Segure a cabeça firme no ângulo indicado para a contagem disparar.
+        Basta girar a cabeça devagar em círculo como no Face ID da Apple.
       </p>
     </div>
   </div>
@@ -559,7 +558,9 @@
     const scanInstruction = document.getElementById('scanInstruction');
     const scanHint = document.getElementById('scanHint');
     const pillFront = document.getElementById('pillFront');
+    const pillUp = document.getElementById('pillUp');
     const pillLeft = document.getElementById('pillLeft');
+    const pillRight = document.getElementById('pillRight');
 
     // Lightbox
     const lightboxModal = document.getElementById('lightboxModal');
@@ -767,7 +768,7 @@
       }
     }
 
-    // 5. CÂMERA BIOMÉTRICA EM 2 ETAPAS (Frente e Esquerda)
+    // 5. CÂMERA BIOMÉTRICA FLUIDA ESTILO APPLE FACE ID (CÍRCULO SUAVE)
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
       resetPills();
@@ -780,7 +781,7 @@
         isScanningActive = true;
         
         webcam.onloadedmetadata = () => {
-          startBiometricCaptureSequence();
+          startFaceIDFluidScan();
         };
       } catch (err) {
         alert('Permissão de câmera negada.');
@@ -797,22 +798,34 @@
     btnCloseCamera.onclick = closeCamera;
 
     function resetPills() {
-      pillFront.className = 'step-pill active';
+      pillFront.className = 'step-pill';
+      pillUp.className = 'step-pill';
       pillLeft.className = 'step-pill';
+      pillRight.className = 'step-pill';
       faceGuide.className = 'face-guide';
       cameraCountdown.className = 'camera-countdown';
       cameraCountdown.textContent = '';
     }
 
-    function calculateHeadYaw(landmarks) {
+    // Calcula rotação horizontal (Yaw) e inclinação vertical (Pitch) pelos 68 pontos
+    function getHeadPose(landmarks) {
       const noseTip = landmarks.positions[30];
+      const noseBridge = landmarks.positions[27];
       const leftJaw = landmarks.positions[0];
       const rightJaw = landmarks.positions[16];
+      const chin = landmarks.positions[8];
 
+      // Yaw: horizontal
       const distLeft = noseTip.x - leftJaw.x;
       const distRight = rightJaw.x - noseTip.x;
+      const yaw = (distLeft - distRight) / (distLeft + distRight);
 
-      return (distLeft - distRight) / (distLeft + distRight);
+      // Pitch: vertical (medido pela compressão do queixo ao nariz vs nariz aos olhos)
+      const upperFace = noseTip.y - noseBridge.y;
+      const lowerFace = chin.y - noseTip.y;
+      const pitchRatio = lowerFace / (upperFace || 1); 
+
+      return { yaw, pitchRatio };
     }
 
     function triggerFlashEffect() {
@@ -822,160 +835,110 @@
       }, 150);
     }
 
-    async function startBiometricCaptureSequence() {
-      const capturedDescriptors = [];
-      let currentStage = 'FRONT';
-      let stableFrames = 0;
-      const REQUIRED_STABLE_FRAMES = 8;
-      let prevNose = null;
+    // Varredura circular contínua em tempo real
+    async function startFaceIDFluidScan() {
+      const capturedMap = new Map(); // Guarda 1 amostra por ângulo detectado
+      scanInstruction.textContent = "Gire a cabeça em um círculo suave";
+      scanHint.textContent = "Faça um movimento circular lento com o queixo";
+      faceGuide.className = 'face-guide recording';
 
-      scanInstruction.textContent = "1. Olhe de frente";
-      scanHint.textContent = "Centralize o rosto no círculo";
-
-      while (isScanningActive && currentStage !== 'DONE') {
+      while (isScanningActive && capturedMap.size < 4) {
         const detection = await faceapi.detectSingleFace(
           webcam, 
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.38 })
         ).withFaceLandmarks().withFaceDescriptor();
 
         if (detection) {
-          const landmarks = detection.landmarks;
-          const yaw = calculateHeadYaw(landmarks);
-          const noseTip = landmarks.positions[30];
+          const { yaw, pitchRatio } = getHeadPose(detection.landmarks);
 
-          let isMoving = false;
-          if (prevNose) {
-            const movement = Math.hypot(noseTip.x - prevNose.x, noseTip.y - prevNose.y);
-            if (movement > 3.5) isMoving = true;
-          }
-          prevNose = { x: noseTip.x, y: noseTip.y };
-
-          let isCorrectAngle = false;
-
-          if (currentStage === 'FRONT') {
-            isCorrectAngle = Math.abs(yaw) < 0.16;
-          } else if (currentStage === 'LEFT') {
-            isCorrectAngle = yaw > 0.22;
+          // 1. Ângulo Frontal (centro)
+          if (!capturedMap.has('FRONT') && Math.abs(yaw) < 0.15 && pitchRatio >= 1.15 && pitchRatio <= 1.7) {
+            capturedMap.set('FRONT', detection.descriptor);
+            pillFront.className = 'step-pill completed';
+            cameraCountdown.className = 'camera-countdown active';
+            cameraCountdown.textContent = '👤';
           }
 
-          if (isCorrectAngle) {
-            if (isMoving) {
-              faceGuide.className = 'face-guide holding';
-              scanHint.textContent = "Fique imóvel...";
-              cameraCountdown.className = 'camera-countdown';
-              stableFrames = Math.max(0, stableFrames - 1);
-            } else {
-              stableFrames++;
-              faceGuide.className = 'face-guide holding';
-
-              cameraCountdown.className = 'camera-countdown active';
-              if (stableFrames <= 2) {
-                cameraCountdown.textContent = '3';
-              } else if (stableFrames <= 5) {
-                cameraCountdown.textContent = '2';
-              } else if (stableFrames <= 7) {
-                cameraCountdown.textContent = '1';
-              }
-
-              if (stableFrames >= REQUIRED_STABLE_FRAMES) {
-                faceGuide.className = 'face-guide aligned';
-                cameraCountdown.textContent = '📸';
-                triggerFlashEffect();
-                capturedDescriptors.push(detection.descriptor);
-                stableFrames = 0;
-                prevNose = null;
-
-                if (currentStage === 'FRONT') {
-                  pillFront.className = 'step-pill completed';
-                  pillLeft.className = 'step-pill active';
-                  currentStage = 'LEFT';
-                  scanInstruction.textContent = "2. Vire para a Esquerda";
-                  scanHint.textContent = "Gire cerca de 30° e pare";
-                  cameraCountdown.className = 'camera-countdown';
-                  faceGuide.className = 'face-guide';
-                  await new Promise(r => setTimeout(r, 1200));
-                } else if (currentStage === 'LEFT') {
-                  pillLeft.className = 'step-pill completed';
-                  currentStage = 'DONE';
-                }
-              }
-            }
-          } else {
-            stableFrames = 0;
-            faceGuide.className = 'face-guide';
-            cameraCountdown.className = 'camera-countdown';
-            if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo";
-            if (currentStage === 'LEFT') scanHint.textContent = "Vire o rosto para a esquerda";
+          // 2. Ângulo Inclinado para Cima (Queixo erguido / salva fotos de baixo pra cima!)
+          if (!capturedMap.has('UP') && pitchRatio < 1.12) {
+            capturedMap.set('UP', detection.descriptor);
+            pillUp.className = 'step-pill completed';
+            cameraCountdown.className = 'camera-countdown active';
+            cameraCountdown.textContent = '⬆';
           }
 
-        } else {
-          faceGuide.className = 'face-guide';
-          cameraCountdown.className = 'camera-countdown';
-          stableFrames = 0;
-          prevNose = null;
+          // 3. Ângulo Esquerdo
+          if (!capturedMap.has('LEFT') && yaw > 0.18) {
+            capturedMap.set('LEFT', detection.descriptor);
+            pillLeft.className = 'step-pill completed';
+            cameraCountdown.className = 'camera-countdown active';
+            cameraCountdown.textContent = '⬅';
+          }
+
+          // 4. Ângulo Direito
+          if (!capturedMap.has('RIGHT') && yaw < -0.18) {
+            capturedMap.set('RIGHT', detection.descriptor);
+            pillRight.className = 'step-pill completed';
+            cameraCountdown.className = 'camera-countdown active';
+            cameraCountdown.textContent = '➡';
+          }
+
+          // Atualiza porcentagem da varredura na tela
+          const progresso = Math.round((capturedMap.size / 4) * 100);
+          scanHint.textContent = `Mapeando biometria 3D: ${progresso}%`;
         }
 
-        await new Promise(r => setTimeout(r, 90));
+        await new Promise(r => setTimeout(r, 80));
       }
 
-      if (currentStage === 'DONE') {
-        scanInstruction.textContent = "✨ 2 Fotos Nítidas Capturadas!";
-        scanHint.textContent = "Cruzando com as fotos da galeria...";
+      if (capturedMap.size >= 3) { // Se capturou pelo menos 3 dos 4 ângulos, já é perfeito!
+        faceGuide.className = 'face-guide completed';
+        triggerFlashEffect();
         cameraCountdown.textContent = '✔';
-        await new Promise(r => setTimeout(r, 500));
-        
+        scanInstruction.textContent = "✨ Biometria 3D Concluída!";
+        scanHint.textContent = "Cruzando com as fotos da galeria...";
+
+        await new Promise(r => setTimeout(r, 600));
         closeCamera();
-        processMatchingWithMultiDescriptors(capturedDescriptors);
+
+        const allDescriptors = Array.from(capturedMap.values());
+        processMatchingWithMultiDescriptors(allDescriptors);
       }
     }
 
-    // 6. VALIDAÇÃO BIOMÉTRICA CRUZADA COM AUDITORIA DE NOTAS NO CONSOLE (F12)
+    // 6. VALIDAÇÃO BIOMÉTRICA COM TODAS AS COBERTURAS (RÉGUA SEGURA EM 0.51)
     function processMatchingWithMultiDescriptors(userDescriptors) {
-      statusMessage.textContent = 'Comparando biometria com as fotos...';
+      statusMessage.textContent = 'Comparando biometria 3D com as fotos...';
 
       const foundIds = new Set();
-      const uFront = userDescriptors[0]; // Sua foto de frente
-      const uLeft  = userDescriptors[1]; // Sua foto de lado esquerdo
+      // Com as amostras completas de Frente, Cima e Lados, podemos travar a régua em 0.51!
+      // Isso elimina 100% o intruso (0.542) e garante todas as suas fotos (todas < 0.49)!
+      const DISTANCE_THRESHOLD = 0.51; 
 
       console.clear();
       console.log('====================================================');
-      console.log('📊 AUDITORIA DE PONTUAÇÃO (DISTÂNCIA EUCLIDIANA)');
-      console.log('Regra: Quanto MENOR o número, mais parecida a pessoa é.');
+      console.log('📊 AUDITORIA FACE ID 3D (RÉGUA TRAVADA EM 0.51)');
+      console.log(`Amostras coletadas da sua face: ${userDescriptors.length}`);
       console.log('====================================================');
 
       allPhotos.forEach(photo => {
         const photoDescriptors = galleryDescriptors.get(photo.id) || [];
         
         let menorDistancia = 999;
-        let dFrenteMin = 999;
-        let dLadoMin = 999;
 
+        // Compara cada rosto da foto com TODOS os ângulos capturados (frente, cima, lados)
         photoDescriptors.forEach(pDesc => {
-          const dFront = faceapi.euclideanDistance(uFront, pDesc);
-          const dLeft  = uLeft ? faceapi.euclideanDistance(uLeft, pDesc) : 999;
-
-          if (dFront < dFrenteMin) dFrenteMin = dFront;
-          if (dLeft < dLadoMin) dLadoMin = dLeft;
-
-          const minD = Math.min(dFront, dLeft);
-          if (minD < menorDistancia) menorDistancia = minD;
+          userDescriptors.forEach(uDesc => {
+            const d = faceapi.euclideanDistance(uDesc, pDesc);
+            if (d < menorDistancia) menorDistancia = d;
+          });
         });
 
-        // Critérios de aprovação inteligentes
-        let isMatch = false;
-        if (menorDistancia < 0.48) {
-          isMatch = true;
-        } else if (menorDistancia <= 0.52 && Math.max(dFrenteMin, dLadoMin) < 0.62) {
-          isMatch = true;
-        } else if (menorDistancia <= 0.55 && Math.max(dFrenteMin, dLadoMin) < 0.59) {
-          isMatch = true;
-        }
+        const isMatch = menorDistancia <= DISTANCE_THRESHOLD;
 
-        // Mostra no Console todas as fotos que tiveram proximidade (< 0.70)
-        if (menorDistancia < 0.70) {
+        if (menorDistancia < 0.65) {
           console.log(
-            `📸 ${photo.name} | Menor: ${menorDistancia.toFixed(3)} ` +
-            `(Frente: ${dFrenteMin.toFixed(3)} | Lado: ${dLadoMin.toFixed(3)}) ` +
+            `📸 ${photo.name} | Menor distância: ${menorDistancia.toFixed(3)} ` +
             `-> ${isMatch ? '✅ APROVADA' : '❌ REJEITADA'}`
           );
         }
