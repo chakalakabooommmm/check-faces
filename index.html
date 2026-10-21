@@ -14,8 +14,8 @@
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
+      background-color: #18181b; /* Cinza escuro */
+      color: #f4f4f5;
       padding: 30px 20px;
     }
 
@@ -33,7 +33,7 @@
     }
 
     p.subtitle {
-      color: #94a3b8;
+      color: #a1a1aa;
       font-size: 1.05rem;
     }
 
@@ -42,8 +42,20 @@
       max-width: 1200px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    @media (min-width: 600px) {
+      .events-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 900px) {
+      .events-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      }
     }
 
     /* Card Quadrado do Evento */
@@ -54,15 +66,15 @@
       overflow: hidden;
       cursor: pointer;
       text-decoration: none;
-      background-color: #1e293b;
-      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
+      background-color: #27272a; /* Cinza escuro secundário */
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
       display: block;
     }
 
     .event-card:hover {
       transform: translateY(-6px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
     }
 
     .event-card img {
@@ -76,19 +88,19 @@
       transform: scale(1.08);
     }
 
-    /* Gradiente e Textos sobre o Card */
     .event-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 40%, rgba(15, 23, 42, 0.95) 100%);
+      background: linear-gradient(180deg, rgba(24, 24, 27, 0.1) 40%, rgba(24, 24, 27, 0.95) 100%);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       padding: 20px;
     }
 
+    /* Data do evento em Vermelho Claro */
     .event-date {
-      color: #38bdf8;
+      color: #f87171; /* Vermelho claro */
       font-size: 0.85rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -109,7 +121,7 @@
       align-items: center;
       gap: 6px;
       font-size: 0.8rem;
-      color: #cbd5e1;
+      color: #e4e4e7;
       background: rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(8px);
       padding: 5px 10px;
@@ -127,8 +139,7 @@
 
   <main class="events-grid" id="eventsGrid"></main>
 
-  <!-- Carrega a lista central de eventos -->
- <script src="./eventos.js?v=novo"></script>
+  <script src="./eventos.js?v=novo"></script>
   <script>
     const eventsGrid = document.getElementById('eventsGrid');
 
@@ -138,17 +149,14 @@
       EVENTOS.forEach(evento => {
         const card = document.createElement('a');
         card.className = 'event-card';
-        // Redireciona para evento.html passando o ID do evento na URL
         card.href = `./evento.html?id=${encodeURIComponent(evento.id)}`;
-
-        const totalAlbuns = evento.folders ? evento.folders.length : 1;
 
         card.innerHTML = `
           <img src="${evento.capa}" alt="${evento.nome}" loading="lazy">
           <div class="event-overlay">
             <span class="event-date">${evento.data}</span>
             <h2 class="event-title">${evento.nome}</h2>
-            <span class="event-badge">📁 ${totalAlbuns} ${totalAlbuns > 1 ? 'álbuns' : 'álbum'}</span>
+            <span class="event-badge">📁 Acessar Galeria</span>
           </div>
         `;
 
