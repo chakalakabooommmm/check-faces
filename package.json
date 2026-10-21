@@ -6,6 +6,6 @@
   },
   "dependencies": {
     "@vladmandic/face-api": "^1.7.12",
-    "@tensorflow/tfjs": "^4.20.0"
+    "@tensorflow/tfjs-node": "^4.22.0"
   }
 }
