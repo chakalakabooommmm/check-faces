@@ -95,4 +95,65 @@ for evento in EVENTOS:
 
     todas_fotos = []
     for sub in subpastas:
-        log(
+        log(f"   └ Vasculhando galeria: {sub['name']}...")
+        fotos_sub = buscar_fotos_da_pasta(sub["id"])
+        todas_fotos.extend(fotos_sub)
+
+    # Remove fotos duplicadas
+    fotos_unicas = {f["id"]: f for f in todas_fotos}.values()
+    fotos_novas = [f for f in fotos_unicas if f["id"] not in faces_db]
+
+    log(f"   └ Total no Drive: {len(fotos_unicas)} | Fotos novas a analisar: {len(fotos_novas)}")
+
+    if not fotos_novas:
+        log("   ✅ Todas as fotos deste evento já estão analisadas!")
+        continue
+
+    # Analisa cada foto nova com o InsightFace otimizado
+    contador = 0
+    for foto in fotos_novas:
+        contador += 1
+        foto_id = foto["id"]
+        foto_nome = foto["name"]
+        log(f"[{contador}/{len(fotos_novas)}] Analisando: {foto_nome}")
+
+        try:
+            # Baixa imagem em tamanho ideal para a IA
+            img_url = f"https://lh3.googleusercontent.com/d/{foto_id}=w1000"
+            resp = requests.get(img_url, timeout=15)
+            if resp.status_code != 200:
+                log(f"   ⚠️ Falha ao baixar {foto_nome} (HTTP {resp.status_code})")
+                continue
+
+            # Decodifica para formato de imagem
+            img_array = np.frombuffer(resp.content, dtype=np.uint8)
+            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+
+            if img is None:
+                continue
+
+            # Extrai os rostos com InsightFace
+            faces = app.get(img)
+            log(f"   └ {len(faces)} rosto(s) encontrado(s).")
+
+            # Salva os 512 números arredondados para 4 casas decimais
+            faces_db[foto_id] = [
+                [round(float(val), 4) for val in face.normed_embedding]
+                for face in faces
+            ]
+
+        except Exception as err:
+            log(f"   ⚠️ Erro ao processar {foto_nome}: {err}")
+
+        # Salva o arquivo a cada 15 fotos para garantir progresso seguro
+        if contador % 15 == 0:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(faces_db, f)
+            log(f"💾 Progresso parcial salvo em {json_path}...")
+
+    # Salva o arquivo final do evento
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(faces_db, f)
+    log(f"🎉 Evento {evento_id} concluído! Salvo em {json_path}.")
+
+log("\n🚀 Todos os eventos foram sincronizados com sucesso!")
