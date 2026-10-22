@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galeria do Evento</title>
   
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- JSZip para download compactado das fotos -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
@@ -13,7 +18,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
@@ -59,7 +64,7 @@
       gap: 6px;
       color: #e4e4e7;
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       margin-bottom: 20px;
       padding: 8px 18px;
@@ -78,7 +83,7 @@
     }
 
     h1 {
-      font-size: 2.4rem;
+      font-size: 2.3rem;
       font-weight: 800;
       margin-bottom: 8px;
       text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
@@ -87,7 +92,7 @@
 
     .event-meta {
       color: #f87171;
-      font-size: 1rem;
+      font-size: 0.95rem;
       margin-bottom: 20px;
       font-weight: 600;
       text-transform: uppercase;
@@ -104,7 +109,7 @@
 
     .btn {
       padding: 13px 26px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       border: none;
       border-radius: 10px;
@@ -138,7 +143,7 @@
     .btn-success:hover { background-color: #047857; transform: translateY(-2px); }
 
     #statusMessage {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #d4d4d8;
       min-height: 24px;
       font-weight: 500;
@@ -164,7 +169,7 @@
       background: none;
       border: none;
       color: #a1a1aa;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       padding: 10px 18px;
       border-radius: 8px;
@@ -215,6 +220,7 @@
       backdrop-filter: blur(4px);
       color: #e4e4e7;
       font-size: 0.75rem;
+      font-weight: 500;
       padding: 4px 8px;
       border-radius: 6px;
       pointer-events: none;
@@ -225,7 +231,7 @@
       text-align: center;
       padding: 60px 20px;
       color: #71717a;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
     }
 
     #scrollLoader {
@@ -241,12 +247,12 @@
     @media (max-width: 600px) {
       body { padding: 10px 6px; }
       header.header-banner { padding: 30px 15px; border-radius: 14px; margin-bottom: 20px; }
-      h1 { font-size: 1.6rem; }
-      .event-meta { font-size: 0.85rem; }
+      h1 { font-size: 1.55rem; }
+      .event-meta { font-size: 0.8rem; }
       .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
       .gallery-item { border-radius: 6px; }
       .folder-badge { font-size: 0.6rem; padding: 2px 4px; bottom: 3px; left: 3px; }
-      .btn { padding: 10px 16px; font-size: 0.9rem; }
+      .btn { padding: 10px 16px; font-size: 0.85rem; }
     }
 
     /* MODAL DE CÂMERA */
@@ -285,7 +291,7 @@
     }
 
     .scan-hint {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #a1a1aa;
       margin-bottom: 15px;
     }
@@ -339,22 +345,23 @@
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
     }
 
-    /* NOME DO ARQUIVO DA FOTO */
+    /* NOME DO ARQUIVO DA FOTO (POPPINS MENOR E ELEGANTE) */
     .photo-filename {
-      margin-top: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #e4e4e7;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d4d4d8;
       text-align: center;
       max-width: 90%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      letter-spacing: 0.3px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
     }
 
     .lightbox-actions {
-      margin-top: 12px;
+      margin-top: 10px;
       display: flex;
       align-items: center;
       gap: 16px;
@@ -362,7 +369,7 @@
       justify-content: center;
     }
 
-    .photo-counter { color: #a1a1aa; font-size: 0.95rem; }
+    .photo-counter { color: #a1a1aa; font-size: 0.85rem; font-weight: 500; }
 
     .nav-btn {
       position: absolute;
@@ -413,7 +420,7 @@
       .nav-btn-prev { left: 8px; }
       .nav-btn-next { right: 8px; }
       .btn-close { top: 10px; right: 10px; width: 36px; height: 36px; }
-      .photo-filename { font-size: 0.9rem; }
+      .photo-filename { font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -473,7 +480,7 @@
     <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
     <div class="lightbox-content">
       <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
-      <!-- Nome do arquivo sem extensão -->
+      <!-- Nome do arquivo sem extensão com Poppins menor -->
       <div class="photo-filename" id="photoFileName"></div>
       <div class="lightbox-actions">
         <a id="btnDownload" class="btn btn-primary" href="" target="_blank" download>Baixar</a>
@@ -685,7 +692,7 @@
       }
     });
 
-    // 3. Lightbox (Atualizado com nome sem extensão e botão "Baixar")
+    // 3. Lightbox
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -699,7 +706,6 @@
       btnDownload.href = photo.downloadUrl;
       photoCounter.textContent = `${currentPhotoIndex + 1} de ${currentFilteredPhotos.length}`;
 
-      // Remove a extensão do arquivo (ex: "IMG_1234.jpg" -> "IMG_1234")
       const nomeSemExtensao = photo.name.replace(/\.[^/.]+$/, "");
       photoFileName.textContent = nomeSemExtensao;
     }
