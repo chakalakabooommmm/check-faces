@@ -212,7 +212,7 @@
       .btn { padding: 10px 16px; font-size: 0.9rem; }
     }
 
-    /* MODAL DE CÂMERA BIOMÉTRICA */
+    /* MODAL DE CÂMERA (AWS REKOGNITION) */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -428,8 +428,8 @@
 
   <script src="./eventos.js?v=novo"></script>
   <script>
-    // SUA API SEGURA DA AWS REKOGNITION (LAMBDA FUNCTION URL)
-    const LAMBDA_URL = 'https://ibt74ka4sone5w66wz7lzmotee0jndnu.lambda-url.us-east-1.on.aws/';
+    // SUA API SEGURA DA AWS REKOGNITION (CONTA OFICIAL 433213575331)
+    const LAMBDA_URL = 'https://6kpp6asjegszsvqjwvfwnqvofa0omonw.lambda-url.us-east-1.on.aws/';
 
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
