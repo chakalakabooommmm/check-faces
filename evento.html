@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galeria do Evento</title>
   
-  <!-- Face-API.js e JSZip -->
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- JSZip para download compactado das fotos -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -18,7 +17,7 @@
     }
 
     body {
-      background-color: #18181b; /* Cinza escuro */
+      background-color: #18181b;
       color: #f4f4f5;
       padding: 20px;
     }
@@ -56,7 +55,7 @@
     }
 
     .event-meta {
-      color: #f87171; /* Vermelho claro */
+      color: #f87171;
       font-size: 0.95rem;
       margin-bottom: 15px;
       font-weight: 500;
@@ -145,7 +144,7 @@
     .tab-btn.active { color: #fff; background-color: #dc2626; }
     .tab-btn.tab-matched { background-color: #059669; color: #fff; }
 
-    /* Grid da Galeria (Computadores e Tablets) */
+    /* Grid da Galeria */
     .gallery-grid {
       max-width: 1200px;
       margin: 0 auto;
@@ -203,7 +202,7 @@
       display: none;
     }
 
-    /* 3 COLUNAS NO CELULAR */
+    /* Celular (3 colunas) */
     @media (max-width: 600px) {
       body { padding: 10px 6px; }
       .gallery-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
@@ -241,36 +240,17 @@
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
     }
 
-    .scan-steps {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin: 15px 0 10px 0;
-      flex-wrap: wrap;
+    .scan-instruction {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
     }
 
-    .step-pill {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 20px;
-      background: #18181b;
-      color: #71717a;
-      border: 1px solid #3f3f46;
-      transition: all 0.3s;
-    }
-
-    .step-pill.active {
-      background: #dc2626;
-      color: #fff;
-      border-color: #ef4444;
-      transform: scale(1.05);
-    }
-
-    .step-pill.completed {
-      background: #059669;
-      color: #fff;
-      border-color: #10b981;
+    .scan-hint {
+      font-size: 0.9rem;
+      color: #a1a1aa;
+      margin-bottom: 15px;
     }
 
     .video-container {
@@ -280,8 +260,8 @@
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      margin: 12px 0 16px 0;
-      border: 2px solid #3f3f46;
+      margin-bottom: 18px;
+      border: 2px solid #ef4444;
     }
 
     video {
@@ -291,7 +271,6 @@
       transform: scaleX(-1);
     }
 
-    /* MÁSCARA PRETA COM CONTORNO VERMELHO */
     .face-guide {
       position: absolute;
       top: 50%;
@@ -300,70 +279,9 @@
       width: 220px;
       height: 275px;
       border-radius: 50%;
-      border: 3.5px solid #ef4444;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.88);
+      border: 3.5px dashed #ef4444;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
       pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      transition: border-color 0.25s, transform 0.25s;
-    }
-
-    .face-guide.holding {
-      border-color: #f87171;
-    }
-
-    .face-guide.aligned {
-      border-color: #10b981;
-      transform: translate(-50%, -50%) scale(1.02);
-    }
-
-    /* CONTAGEM CENTRAL */
-    .camera-countdown {
-      font-size: 4.5rem;
-      font-weight: 900;
-      color: #ffffff;
-      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.8);
-      pointer-events: none;
-      opacity: 0;
-      transform: scale(0.5);
-      transition: transform 0.15s ease-out, opacity 0.15s ease-out;
-      user-select: none;
-    }
-
-    .camera-countdown.active {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    .camera-flash {
-      position: absolute;
-      inset: 0;
-      background: #ffffff;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.1s ease-out;
-      z-index: 25;
-    }
-    .camera-flash.flash-active {
-      opacity: 0.9;
-    }
-
-    .scan-instruction {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #ffffff;
-      min-height: 28px;
-      margin-bottom: 4px;
-    }
-
-    .scan-hint {
-      font-size: 0.85rem;
-      color: #a1a1aa;
-      min-height: 20px;
-      margin-bottom: 10px;
-      font-weight: 500;
     }
 
     /* Lightbox */
@@ -456,7 +374,7 @@
 
     <div class="controls">
       <button class="btn btn-primary" id="btnScanFace" disabled>
-        📷 Escanear meu Rosto (3 Passos)
+        📷 Encontrar Minhas Fotos
       </button>
       <button class="btn btn-secondary" id="btnResetFilter" style="display: none;">
         Mostrar Todas as Fotos
@@ -475,33 +393,22 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE CÂMERA BIOMÉTRICA (3 PASSOS GUIADOS COM AUTO-CALIBRAÇÃO) -->
+  <!-- MODAL DE CÂMERA (AWS REKOGNITION) -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
       
-      <div class="scan-instruction" id="scanInstruction">1. Olhe de frente</div>
-      <div class="scan-hint" id="scanHint">Olhe normalmente para a tela e fique parado</div>
-
-      <!-- Indicadores dos 3 Passos Guiados -->
-      <div class="scan-steps">
-        <span class="step-pill active" id="pillFront">1. Frente</span>
-        <span class="step-pill" id="pillSide">2. Lado</span>
-        <span class="step-pill" id="pillUp">3. Queixo</span>
-      </div>
+      <div class="scan-instruction">Encontre seu Rosto</div>
+      <div class="scan-hint">Posicione seu rosto dentro da moldura e tire a foto</div>
 
       <div class="video-container">
         <video id="webcam" autoplay playsinline muted></video>
-        <div class="camera-flash" id="cameraFlash"></div>
-        
-        <div class="face-guide" id="faceGuide">
-          <div class="camera-countdown" id="cameraCountdown">3</div>
-        </div>
+        <div class="face-guide"></div>
       </div>
 
-      <p style="font-size: 0.78rem; color: #71717a;">
-        Segure a cabeça firme no ângulo indicado para a contagem disparar.
-      </p>
+      <button class="btn btn-primary" id="btnCapturePhoto" style="width: 100%; justify-content: center;">
+        📸 Tirar Foto & Buscar
+      </button>
     </div>
   </div>
 
@@ -521,6 +428,9 @@
 
   <script src="./eventos.js?v=novo"></script>
   <script>
+    // SUA API SEGURA DA AWS REKOGNITION (LAMBDA FUNCTION URL)
+    const LAMBDA_URL = 'https://ibt74ka4sone5w66wz7lzmotee0jndnu.lambda-url.us-east-1.on.aws/';
+
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
     const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
@@ -536,11 +446,9 @@
     let allPhotos = [];
     let currentFilteredPhotos = [];
     let currentPhotoIndex = 0;
-    const galleryDescriptors = new Map();
     let activeTabId = '';
     let matchedPhotoIds = null;
     let stream = null;
-    let isScanningActive = false;
 
     const tabsBar = document.getElementById('tabsBar');
     const galleryGrid = document.getElementById('galleryGrid');
@@ -554,14 +462,7 @@
     const cameraModal = document.getElementById('cameraModal');
     const webcam = document.getElementById('webcam');
     const btnCloseCamera = document.getElementById('btnCloseCamera');
-    const faceGuide = document.getElementById('faceGuide');
-    const cameraCountdown = document.getElementById('cameraCountdown');
-    const cameraFlash = document.getElementById('cameraFlash');
-    const scanInstruction = document.getElementById('scanInstruction');
-    const scanHint = document.getElementById('scanHint');
-    const pillFront = document.getElementById('pillFront');
-    const pillSide = document.getElementById('pillSide');
-    const pillUp = document.getElementById('pillUp');
+    const btnCapturePhoto = document.getElementById('btnCapturePhoto');
 
     // Lightbox
     const lightboxModal = document.getElementById('lightboxModal');
@@ -572,9 +473,9 @@
     const btnNextPhoto = document.getElementById('btnNextPhoto');
     const photoCounter = document.getElementById('photoCounter');
 
-    // 1. Descobrir subpastas dinamicamente com diagnóstico na tela
+    // 1. Carregar fotos do Google Drive
     async function loadEventGallery() {
-      statusMessage.textContent = 'Identificando galerias no Google Drive...';
+      statusMessage.textContent = 'Carregando fotos do Google Drive...';
 
       try {
         const queryPastas = encodeURIComponent(`'${eventoAtual.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
@@ -583,14 +484,7 @@
         const resPastas = await fetch(urlPastas);
         const dataPastas = await resPastas.json();
 
-        if (dataPastas.error) {
-          console.error("ERRO DO GOOGLE:", dataPastas.error);
-          statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro do Google: ${dataPastas.error.message}</span>`;
-          return false;
-        }
-
         let subpastas = dataPastas.files || [];
-
         if (subpastas.length === 0) {
           subpastas = [{ id: eventoAtual.folderId, name: 'Todas as Fotos' }];
         }
@@ -603,7 +497,7 @@
         }
 
         if (allPhotos.length === 0) {
-          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento (verifique se a pasta está pública no Drive).';
+          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
           return false;
         }
 
@@ -612,6 +506,9 @@
 
         renderTabs();
         setupGalleryView();
+        
+        statusMessage.textContent = 'Pronto! Você pode ver as fotos ou encontrar seu rosto pela câmera.';
+        btnScanFace.disabled = false;
         return true;
       } catch (err) {
         console.error(err);
@@ -631,11 +528,6 @@
           const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
           const res = await fetch(url);
           const data = await res.json();
-
-          if (data.error) {
-            statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro na pasta ${folderName}: ${data.error.message}</span>`;
-            return [];
-          }
 
           if (data.files) allFiles.push(...data.files);
           pageToken = data.nextPageToken;
@@ -756,47 +648,17 @@
       }
     });
 
-    // 4. Carregar IA
-    async function initFaceAPI() {
-      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-      try {
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]);
-
-        const res = await fetch('./faces.json?t=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          const precomputedFaces = await res.json();
-          for (const [photoId, descriptors] of Object.entries(precomputedFaces)) {
-            galleryDescriptors.set(photoId, descriptors.map(d => new Float32Array(d)));
-          }
-        }
-
-        statusMessage.textContent = 'Pronto! Você pode ver as fotos ou escanear seu rosto.';
-        btnScanFace.disabled = false;
-      } catch (err) {
-        statusMessage.textContent = 'Pronto! Galeria carregada.';
-        btnScanFace.disabled = false;
-      }
-    }
-
-    // 5. CÂMERA BIOMÉTRICA (3 PASSOS COM AUTO-CALIBRAÇÃO DE POSTURA NATURAL)
+    // 4. CÂMERA BIOMÉTRICA (AWS REKOGNITION)
     btnScanFace.onclick = async () => {
       cameraModal.style.display = 'flex';
-      resetPills();
+      btnCapturePhoto.disabled = false;
+      btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 720 } } 
         });
         webcam.srcObject = stream;
-        isScanningActive = true;
-        
-        webcam.onloadedmetadata = () => {
-          startOption2CaptureSequence();
-        };
       } catch (err) {
         alert('Permissão de câmera negada.');
         cameraModal.style.display = 'none';
@@ -804,240 +666,78 @@
     };
 
     function closeCamera() {
-      isScanningActive = false;
       cameraModal.style.display = 'none';
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
     }
 
     btnCloseCamera.onclick = closeCamera;
 
-    function resetPills() {
-      pillFront.className = 'step-pill active';
-      pillSide.className = 'step-pill';
-      pillUp.className = 'step-pill';
-      faceGuide.className = 'face-guide';
-      cameraCountdown.className = 'camera-countdown';
-      cameraCountdown.textContent = '';
-    }
+    // Dispara a busca inteligente na AWS
+    btnCapturePhoto.onclick = async () => {
+      btnCapturePhoto.disabled = true;
+      btnCapturePhoto.textContent = '⏳ Consultando AWS Rekognition...';
 
-    function getHeadPose(landmarks) {
-      const noseTip = landmarks.positions[30];
-      const noseBridge = landmarks.positions[27];
-      const leftJaw = landmarks.positions[0];
-      const rightJaw = landmarks.positions[16];
-      const chin = landmarks.positions[8];
-
-      // Yaw (horizontal)
-      const distLeft = noseTip.x - leftJaw.x;
-      const distRight = rightJaw.x - noseTip.x;
-      const yaw = (distLeft - distRight) / (distLeft + distRight);
-
-      // Pitch vertical (queixo ao nariz vs nariz aos olhos)
-      const upperFace = noseTip.y - noseBridge.y;
-      const lowerFace = chin.y - noseTip.y;
-      const pitchRatio = lowerFace / (upperFace || 1);
-
-      return { yaw, pitchRatio, noseTip };
-    }
-
-    function triggerFlashEffect() {
-      cameraFlash.classList.add('flash-active');
-      setTimeout(() => {
-        cameraFlash.classList.remove('flash-active');
-      }, 150);
-    }
-
-    async function startOption2CaptureSequence() {
-      const capturedDescriptors = [];
-      let currentStage = 'FRONT'; // 'FRONT' -> 'SIDE' -> 'UP' -> 'DONE'
-      let stableFrames = 0;
-      const REQUIRED_STABLE_FRAMES = 8;
-      let prevNose = null;
-      let baselinePitch = 1.4; // Guarda a postura natural relaxada do seu rosto
-
-      scanInstruction.textContent = "1. Olhe de frente";
-      scanHint.textContent = "Olhe normalmente para a tela e fique parado";
-
-      while (isScanningActive && currentStage !== 'DONE') {
-        const detection = await faceapi.detectSingleFace(
-          webcam, 
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
-        ).withFaceLandmarks().withFaceDescriptor();
-
-        if (detection) {
-          const { yaw, pitchRatio, noseTip } = getHeadPose(detection.landmarks);
-
-          // Sensor Anti-Tremido
-          let isMoving = false;
-          if (prevNose) {
-            const movement = Math.hypot(noseTip.x - prevNose.x, noseTip.y - prevNose.y);
-            if (movement > 3.5) isMoving = true;
-          }
-          prevNose = { x: noseTip.x, y: noseTip.y };
-
-          let isCorrectAngle = false;
-
-          if (currentStage === 'FRONT') {
-            // ✅ POSTURA RELAXADA: Faixa ampla para você não precisar abaixar a cabeça
-            isCorrectAngle = Math.abs(yaw) < 0.18 && pitchRatio >= 0.90 && pitchRatio <= 2.0;
-          } else if (currentStage === 'SIDE') {
-            // De lado: virado cerca de 25°
-            isCorrectAngle = yaw > 0.20;
-          } else if (currentStage === 'UP') {
-            // ✅ QUEIXO NATURAL: Apenas ergue um pouco em relação à sua postura relaxada do Passo 1
-            isCorrectAngle = (pitchRatio > baselinePitch + 0.28 || pitchRatio > 1.85) && Math.abs(yaw) < 0.22;
-          }
-
-          if (isCorrectAngle) {
-            if (isMoving) {
-              faceGuide.className = 'face-guide holding';
-              scanHint.textContent = "Fique imóvel...";
-              cameraCountdown.className = 'camera-countdown';
-              stableFrames = Math.max(0, stableFrames - 1);
-            } else {
-              stableFrames++;
-              faceGuide.className = 'face-guide holding';
-
-              cameraCountdown.className = 'camera-countdown active';
-              if (stableFrames <= 2) {
-                cameraCountdown.textContent = '3';
-              } else if (stableFrames <= 5) {
-                cameraCountdown.textContent = '2';
-              } else if (stableFrames <= 7) {
-                cameraCountdown.textContent = '1';
-              }
-
-              if (stableFrames >= REQUIRED_STABLE_FRAMES) {
-                faceGuide.className = 'face-guide aligned';
-                cameraCountdown.textContent = '📸';
-                triggerFlashEffect();
-                capturedDescriptors.push(detection.descriptor);
-                stableFrames = 0;
-                prevNose = null;
-
-                if (currentStage === 'FRONT') {
-                  // Memoriza o seu neutro exato para usar de base no Passo 3
-                  baselinePitch = pitchRatio;
-                  
-                  pillFront.className = 'step-pill completed';
-                  pillSide.className = 'step-pill active';
-                  currentStage = 'SIDE';
-                  scanInstruction.textContent = "2. Vire o rosto de lado";
-                  scanHint.textContent = "Gire cerca de 30° para o lado e pare";
-                  cameraCountdown.className = 'camera-countdown';
-                  faceGuide.className = 'face-guide';
-                  await new Promise(r => setTimeout(r, 1200));
-                } else if (currentStage === 'SIDE') {
-                  pillSide.className = 'step-pill completed';
-                  pillUp.className = 'step-pill active';
-                  currentStage = 'UP';
-                  scanInstruction.textContent = "3. Erga levemente o queixo";
-                  scanHint.textContent = "Olhe suavemente para CIMA e pare";
-                  cameraCountdown.className = 'camera-countdown';
-                  faceGuide.className = 'face-guide';
-                  await new Promise(r => setTimeout(r, 1200));
-                } else if (currentStage === 'UP') {
-                  pillUp.className = 'step-pill completed';
-                  currentStage = 'DONE';
-                }
-              }
-            }
-          } else {
-            stableFrames = 0;
-            faceGuide.className = 'face-guide';
-            cameraCountdown.className = 'camera-countdown';
-            if (currentStage === 'FRONT') scanHint.textContent = "Centralize o rosto no círculo e fique parado";
-            if (currentStage === 'SIDE') scanHint.textContent = "Vire mais o rosto de lado";
-            if (currentStage === 'UP') scanHint.textContent = "Erga um pouquinho o queixo para cima";
-          }
-
-        } else {
-          faceGuide.className = 'face-guide';
-          cameraCountdown.className = 'camera-countdown';
-          stableFrames = 0;
-          prevNose = null;
-        }
-
-        await new Promise(r => setTimeout(r, 90));
-      }
-
-      if (currentStage === 'DONE') {
-        scanInstruction.textContent = "✨ 3 Fotos Nítidas Capturadas!";
-        scanHint.textContent = "Cruzando biometria com as fotos da galeria...";
-        cameraCountdown.textContent = '✔';
-        await new Promise(r => setTimeout(r, 500));
+      try {
+        // Captura o frame do vídeo
+        const canvas = document.createElement('canvas');
+        canvas.width = webcam.videoWidth || 640;
+        canvas.height = webcam.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
         
-        closeCamera();
-        processMatchingWithMultiDescriptors(capturedDescriptors);
-      }
-    }
+        // Espelha horizontalmente para manter a imagem natural
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
 
-    // 6. VALIDAÇÃO BIOMÉTRICA CIRÚRGICA (RÉGUA: 0.515 COM AUDITORIA NO CONSOLE)
-    function processMatchingWithMultiDescriptors(userDescriptors) {
-      statusMessage.textContent = 'Comparando biometria com as fotos...';
+        const base64Image = canvas.toDataURL('image/jpeg', 0.85);
 
-      const foundIds = new Set();
-      const DISTANCE_THRESHOLD = 0.515; 
-
-      console.clear();
-      console.log('====================================================');
-      console.log('📊 AUDITORIA DE PONTUAÇÃO (RÉGUA CIRÚRGICA: 0.515)');
-      console.log('====================================================');
-
-      allPhotos.forEach(photo => {
-        const photoDescriptors = galleryDescriptors.get(photo.id) || [];
-        
-        let menorDistancia = 999;
-        let dFrenteMin = 999;
-        let dLadoMin = 999;
-        let dCimaMin = 999;
-
-        photoDescriptors.forEach(pDesc => {
-          const dFront = faceapi.euclideanDistance(userDescriptors[0], pDesc);
-          const dSide  = userDescriptors[1] ? faceapi.euclideanDistance(userDescriptors[1], pDesc) : 999;
-          const dUp    = userDescriptors[2] ? faceapi.euclideanDistance(userDescriptors[2], pDesc) : 999;
-
-          if (dFront < dFrenteMin) dFrenteMin = dFront;
-          if (dSide < dLadoMin) dLadoMin = dSide;
-          if (dUp < dCimaMin) dCimaMin = dUp;
-
-          const minD = Math.min(dFront, dSide, dUp);
-          if (minD < menorDistancia) menorDistancia = minD;
+        // Envia para a sua Lambda da AWS
+        const res = await fetch(LAMBDA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: eventoAtual.id,
+            image: base64Image
+          })
         });
 
-        const isMatch = menorDistancia <= DISTANCE_THRESHOLD;
+        const data = await res.json();
 
-        if (menorDistancia < 0.65) {
-          console.log(
-            `📸 ${photo.name} | Menor: ${menorDistancia.toFixed(3)} ` +
-            `(Frente: ${dFrenteMin.toFixed(3)} | Lado: ${dLadoMin.toFixed(3)} | Cima: ${dCimaMin.toFixed(3)}) ` +
-            `-> ${isMatch ? '✅ APROVADA' : '❌ REJEITADA'}`
-          );
+        if (!res.ok || data.erro) {
+          alert(data.erro || 'Erro ao processar imagem.');
+          btnCapturePhoto.disabled = false;
+          btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
+          return;
         }
 
-        if (isMatch) {
-          foundIds.add(photo.id);
+        closeCamera();
+
+        const matchedIds = data.matchedIds || [];
+        if (matchedIds.length > 0) {
+          matchedPhotoIds = new Set(matchedIds);
+          activeTabId = 'matched';
+          renderTabs();
+          setupGalleryView();
+          statusMessage.textContent = `✨ Encontramos ${matchedIds.length} foto(s) com o seu rosto!`;
+          btnResetFilter.style.display = 'inline-block';
+          btnDownloadAllMatched.style.display = 'inline-block';
+          btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${matchedIds.length})`;
+        } else {
+          alert('Não encontramos você nas fotos deste evento. Tente tirar a foto mais de perto e em um local bem iluminado.');
+          statusMessage.textContent = 'Nenhuma foto encontrada para este rosto.';
         }
-      });
 
-      console.log('====================================================');
-
-      if (foundIds.size > 0) {
-        matchedPhotoIds = foundIds;
-        activeTabId = 'matched';
-        renderTabs();
-        setupGalleryView();
-        statusMessage.textContent = `Encontramos ${foundIds.size} foto(s) onde você aparece!`;
-        btnResetFilter.style.display = 'inline-block';
-        btnDownloadAllMatched.style.display = 'inline-block';
-        btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${foundIds.size})`;
-      } else {
-        alert('Não encontramos você nas fotos deste evento. Se estava de óculos nas fotos, tente escanear com os óculos.');
-        statusMessage.textContent = 'Nenhuma foto encontrada para este rosto.';
+      } catch (err) {
+        console.error(err);
+        alert('Erro de conexão ao consultar a IA da Amazon.');
+        btnCapturePhoto.disabled = false;
+        btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
       }
-    }
+    };
 
-    // 7. Download ZIP
+    // 5. Download ZIP das fotos encontradas
     btnDownloadAllMatched.onclick = async () => {
       if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
       const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
@@ -1057,7 +757,7 @@
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(zipBlob);
-        a.download = `fotos_${eventoAtual.id}.zip`;
+        a.download = `minhas_fotos_${eventoAtual.id}.zip`;
         a.click();
         btnDownloadAllMatched.textContent = '✔ Download Concluído!';
         setTimeout(() => {
@@ -1080,10 +780,8 @@
       statusMessage.textContent = 'Exibindo todas as fotos.';
     };
 
-    (async () => {
-      const ok = await loadEventGallery();
-      if (ok) await initFaceAPI();
-    })();
+    // Inicializa a galeria
+    loadEventGallery();
   </script>
 </body>
 </html>
