@@ -38,7 +38,7 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* Máscara escura para dar contraste e legibilidade perfeita */
+    /* Máscara escura para dar contraste e legibilidade */
     header.header-banner::before {
       content: '';
       position: absolute;
@@ -333,14 +333,28 @@
 
     .lightbox-img {
       max-width: 100%;
-      max-height: 75vh;
+      max-height: 70vh;
       border-radius: 8px;
       object-fit: contain;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
     }
 
+    /* NOME DO ARQUIVO DA FOTO */
+    .photo-filename {
+      margin-top: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e4e4e7;
+      text-align: center;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
     .lightbox-actions {
-      margin-top: 15px;
+      margin-top: 12px;
       display: flex;
       align-items: center;
       gap: 16px;
@@ -399,6 +413,7 @@
       .nav-btn-prev { left: 8px; }
       .nav-btn-next { right: 8px; }
       .btn-close { top: 10px; right: 10px; width: 36px; height: 36px; }
+      .photo-filename { font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -458,8 +473,10 @@
     <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
     <div class="lightbox-content">
       <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
+      <!-- Nome do arquivo sem extensão -->
+      <div class="photo-filename" id="photoFileName"></div>
       <div class="lightbox-actions">
-        <a id="btnDownload" class="btn btn-primary" href="" target="_blank" download>⬇ Baixar em Alta Resolução</a>
+        <a id="btnDownload" class="btn btn-primary" href="" target="_blank" download>Baixar</a>
         <span class="photo-counter" id="photoCounter"></span>
       </div>
     </div>
@@ -513,6 +530,7 @@
     // Lightbox
     const lightboxModal = document.getElementById('lightboxModal');
     const lightboxImg = document.getElementById('lightboxImg');
+    const photoFileName = document.getElementById('photoFileName');
     const btnCloseLightbox = document.getElementById('btnCloseLightbox');
     const btnDownload = document.getElementById('btnDownload');
     const btnPrevPhoto = document.getElementById('btnPrevPhoto');
@@ -667,7 +685,7 @@
       }
     });
 
-    // 3. Lightbox
+    // 3. Lightbox (Atualizado com nome sem extensão e botão "Baixar")
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -680,6 +698,10 @@
       lightboxImg.src = photo.fullUrl;
       btnDownload.href = photo.downloadUrl;
       photoCounter.textContent = `${currentPhotoIndex + 1} de ${currentFilteredPhotos.length}`;
+
+      // Remove a extensão do arquivo (ex: "IMG_1234.jpg" -> "IMG_1234")
+      const nomeSemExtensao = photo.name.replace(/\.[^/.]+$/, "");
+      photoFileName.textContent = nomeSemExtensao;
     }
 
     btnNextPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex + 1) % currentFilteredPhotos.length; updateLightboxDisplay(); };
