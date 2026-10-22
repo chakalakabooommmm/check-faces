@@ -1,19 +1,15 @@
-name: Robô Atualizador de Faces
+name: Robô Atualizador de Faces (InsightFace)
 
 on:
   schedule:
-    # Roda a cada 2 horas como garantia de sincronia
     - cron: '0 */2 * * *'
-  # Permite rodar manualmente pelo painel do GitHub
   workflow_dispatch:
-  # Disparado na hora pelo Google Apps Script
   repository_dispatch:
     types: [drive-upload]
 
 permissions:
   contents: write
 
-# Garante que apenas um robô rode por vez, enfileirando o próximo se necessário
 concurrency:
   group: sync-faces
   cancel-in-progress: false
@@ -28,31 +24,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configurar Node.js (v20 LTS para compatibilidade com TensorFlow)
-        uses: actions/setup-node@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          node-version: 20
-          cache: 'npm'
+          python-version: '3.10'
+          cache: 'pip'
 
-      - name: Instalar bibliotecas
-        run: npm ci || npm install
+      - name: Instalar Dependências do InsightFace
+        run: |
+          pip install --upgrade pip
+          pip install insightface onnxruntime opencv-python-headless numpy requests
 
-      - name: Rodar inteligência artificial
+      - name: Rodar Inteligência Artificial
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: node sync-faces.js
+        run: python sync_faces.py
 
-      - name: Salvar alterações no faces.json
+      - name: Salvar alterações no repositório
         run: |
           git config --global user.name "Robô das Fotos"
           git config --global user.email "bot@galeria.com"
-          git add faces.json
-          
-          # Verifica se o faces.json realmente mudou antes de tentar comitar
+          git add faces-*.json
           if ! git diff --staged --quiet; then
-            git commit -m "faces.json atualizado automaticamente [skip ci]"
+            git commit -m "faces atualizadas via InsightFace [skip ci]"
             git pull --rebase origin main
             git push origin main
           else
-            echo "Nenhuma mudança no faces.json para enviar."
+            echo "Nenhuma mudança nas faces para enviar."
           fi
