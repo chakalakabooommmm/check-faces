@@ -479,4 +479,426 @@
     <button class="btn-close" id="btnCloseLightbox">&times;</button>
     <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
     <div class="lightbox-content">
-      <
+      <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
+      <div class="photo-filename" id="photoFileName"></div>
+      <div class="lightbox-actions">
+        <button id="btnDownload" class="btn btn-primary">Baixar</button>
+        <span class="photo-counter" id="photoCounter"></span>
+      </div>
+    </div>
+    <button class="nav-btn nav-btn-next" id="btnNextPhoto">&#10095;</button>
+  </div>
+
+  <script src="./eventos.js?v=novo"></script>
+  <script>
+    const LAMBDA_URL = 'https://6kpp6asjegszsvqjwvfwnqvofa0omonw.lambda-url.us-east-1.on.aws/';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    const eventoAtual = EVENTOS.find(e => e.id === eventId) || EVENTOS[0];
+
+    document.getElementById('eventTitle').textContent = eventoAtual.nome;
+    document.getElementById('eventDate').textContent = eventoAtual.data;
+    document.title = `${eventoAtual.nome} - Galeria`;
+
+    const headerBanner = document.getElementById('headerBanner');
+    if (eventoAtual.capa) {
+      headerBanner.style.backgroundImage = `url('${eventoAtual.capa}')`;
+    }
+
+    /* ESTADO DA APLICAÇÃO */
+    let FOLDERS = [];
+    const BATCH_SIZE = 30;
+    let renderedCount = 0;
+    let allPhotos = [];
+    let currentFilteredPhotos = [];
+    let currentPhotoIndex = 0;
+    let activeTabId = '';
+    let matchedPhotoIds = null;
+    let stream = null;
+
+    const tabsBar = document.getElementById('tabsBar');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const scrollLoader = document.getElementById('scrollLoader');
+    const statusMessage = document.getElementById('statusMessage');
+    const btnScanFace = document.getElementById('btnScanFace');
+    const btnResetFilter = document.getElementById('btnResetFilter');
+    const btnDownloadAllMatched = document.getElementById('btnDownloadAllMatched');
+
+    // Câmera & Scanner
+    const cameraModal = document.getElementById('cameraModal');
+    const webcam = document.getElementById('webcam');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const btnCapturePhoto = document.getElementById('btnCapturePhoto');
+
+    // Lightbox
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const photoFileName = document.getElementById('photoFileName');
+    const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnPrevPhoto = document.getElementById('btnPrevPhoto');
+    const btnNextPhoto = document.getElementById('btnNextPhoto');
+    const photoCounter = document.getElementById('photoCounter');
+
+    // 1. Carregar fotos do Google Drive
+    async function loadEventGallery() {
+      statusMessage.textContent = 'Carregando fotos do Google Drive...';
+
+      try {
+        const queryPastas = encodeURIComponent(`'${eventoAtual.folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+        const urlPastas = `https://www.googleapis.com/drive/v3/files?q=${queryPastas}&fields=files(id,name)&key=${GOOGLE_API_KEY}`;
+        
+        const resPastas = await fetch(urlPastas);
+        const dataPastas = await resPastas.json();
+
+        let subpastas = dataPastas.files || [];
+        if (subpastas.length === 0) {
+          subpastas = [{ id: eventoAtual.folderId, name: 'Todas as Fotos' }];
+        }
+
+        allPhotos = [];
+        for (const pasta of subpastas) {
+          statusMessage.textContent = `Carregando galeria: ${pasta.name}...`;
+          const fotosDaPasta = await fetchPhotosFromSubfolder(pasta.id, pasta.name);
+          allPhotos.push(...fotosDaPasta);
+        }
+
+        if (allPhotos.length === 0) {
+          statusMessage.textContent = 'Nenhuma foto encontrada nas pastas deste evento.';
+          return false;
+        }
+
+        FOLDERS = subpastas;
+        activeTabId = FOLDERS[0].id;
+
+        renderTabs();
+        setupGalleryView();
+        
+        statusMessage.textContent = 'Pronto! Você pode ver as fotos ou encontrar seu rosto pela câmera.';
+        btnScanFace.disabled = false;
+        return true;
+      } catch (err) {
+        console.error(err);
+        statusMessage.innerHTML = `<span style="color: #ef4444; font-weight: bold;">❌ Erro de conexão: ${err.message}</span>`;
+        return false;
+      }
+    }
+
+    async function fetchPhotosFromSubfolder(folderId, folderName) {
+      const query = encodeURIComponent(`'${folderId}' in parents and mimeType contains 'image/' and trashed = false`);
+      let allFiles = [];
+      let pageToken = '';
+
+      try {
+        do {
+          const pageParam = pageToken ? `&pageToken=${pageToken}` : '';
+          const url = `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&fields=nextPageToken,files(id,name)&key=${GOOGLE_API_KEY}${pageParam}`;
+          const res = await fetch(url);
+          const data = await res.json();
+
+          if (data.files) allFiles.push(...data.files);
+          pageToken = data.nextPageToken;
+        } while (pageToken);
+
+        return allFiles.map(file => ({
+          id: file.id,
+          name: file.name,
+          folderId: folderId,
+          folderName: folderName,
+          thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
+          fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`,
+          downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
+        }));
+      } catch (e) {
+        return [];
+      }
+    }
+
+    // 2. Abas e Renderização
+    function renderTabs() {
+      tabsBar.innerHTML = '';
+      if (matchedPhotoIds !== null) {
+        const matchedBtn = document.createElement('button');
+        matchedBtn.className = `tab-btn tab-matched ${activeTabId === 'matched' ? 'active' : ''}`;
+        matchedBtn.innerHTML = `✨ Suas Fotos (${matchedPhotoIds.size})`;
+        matchedBtn.onclick = () => { activeTabId = 'matched'; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(matchedBtn);
+      }
+
+      FOLDERS.forEach(folder => {
+        const total = allPhotos.filter(p => {
+          const inFolder = p.folderId === folder.id;
+          return matchedPhotoIds ? (inFolder && matchedPhotoIds.has(p.id)) : inFolder;
+        }).length;
+
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${activeTabId === folder.id ? 'active' : ''}`;
+        btn.innerHTML = `${folder.name} <span>(${total})</span>`;
+        btn.onclick = () => { activeTabId = folder.id; renderTabs(); setupGalleryView(); };
+        tabsBar.appendChild(btn);
+      });
+    }
+
+    function setupGalleryView() {
+      galleryGrid.innerHTML = '';
+      renderedCount = 0;
+
+      if (activeTabId === 'matched') {
+        currentFilteredPhotos = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      } else {
+        currentFilteredPhotos = allPhotos.filter(p => {
+          const match = p.folderId === activeTabId;
+          return matchedPhotoIds ? (match && matchedPhotoIds.has(p.id)) : match;
+        });
+      }
+
+      if (currentFilteredPhotos.length === 0) {
+        galleryGrid.innerHTML = '<div class="empty-message">Nenhuma foto para exibir nesta aba.</div>';
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      renderNextBatch();
+    }
+
+    function renderNextBatch() {
+      if (renderedCount >= currentFilteredPhotos.length) {
+        scrollLoader.style.display = 'none';
+        return;
+      }
+      const nextBatch = currentFilteredPhotos.slice(renderedCount, renderedCount + BATCH_SIZE);
+      nextBatch.forEach((photo, i) => {
+        const globalIndex = renderedCount + i;
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+          <img src="${photo.thumbUrl}" alt="${photo.name}" loading="lazy">
+          ${activeTabId === 'matched' ? `<span class="folder-badge">${photo.folderName}</span>` : ''}
+        `;
+        item.onclick = () => openLightbox(globalIndex);
+        galleryGrid.appendChild(item);
+      });
+
+      renderedCount += nextBatch.length;
+      scrollLoader.style.display = renderedCount < currentFilteredPhotos.length ? 'block' : 'none';
+    }
+
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+        renderNextBatch();
+      }
+    });
+
+    // 3. Lightbox com Download Inteligente (Sem página em branco)
+    function openLightbox(index) {
+      currentPhotoIndex = index;
+      updateLightboxDisplay();
+      lightboxModal.style.display = 'flex';
+    }
+
+    function updateLightboxDisplay() {
+      if (currentFilteredPhotos.length === 0) return;
+      const photo = currentFilteredPhotos[currentPhotoIndex];
+      lightboxImg.src = photo.fullUrl;
+      photoCounter.textContent = `${currentPhotoIndex + 1} de ${currentFilteredPhotos.length}`;
+
+      const nomeSemExtensao = photo.name.replace(/\.[^/.]+$/, "");
+      photoFileName.textContent = nomeSemExtensao;
+    }
+
+    // BOTÃO DE DOWNLOAD DIRETO E NATIVO (IPHONE / ANDROID / PC)
+    btnDownload.onclick = async (e) => {
+      e.stopPropagation();
+      if (currentFilteredPhotos.length === 0) return;
+
+      const photo = currentFilteredPhotos[currentPhotoIndex];
+      btnDownload.disabled = true;
+      btnDownload.textContent = '⏳ Baixando...';
+
+      try {
+        const res = await fetch(photo.fullUrl);
+        const blob = await res.blob();
+        const nomeArquivo = photo.name || `foto_${photo.id}.jpg`;
+
+        // 1. NO IPHONE / CELULAR: Abre a gaveta para "Salvar Imagem" no Rolo da Câmera
+        const file = new File([blob], nomeArquivo, { type: blob.type || 'image/jpeg' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: nomeArquivo
+          });
+          btnDownload.disabled = false;
+          btnDownload.textContent = 'Baixar';
+          return;
+        }
+
+        // 2. NO COMPUTADOR / ANDROID: Força o download limpo do arquivo
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+        btnDownload.textContent = '✔ Baixado!';
+        setTimeout(() => {
+          btnDownload.disabled = false;
+          btnDownload.textContent = 'Baixar';
+        }, 1500);
+
+      } catch (err) {
+        console.error('Falha no download via blob:', err);
+        // Fallback final: se o usuário cancelar o share ou der erro, abre a foto direta
+        window.open(photo.fullUrl, '_blank');
+        btnDownload.disabled = false;
+        btnDownload.textContent = 'Baixar';
+      }
+    };
+
+    btnNextPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex + 1) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnPrevPhoto.onclick = (e) => { e.stopPropagation(); currentPhotoIndex = (currentPhotoIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length; updateLightboxDisplay(); };
+    btnCloseLightbox.onclick = () => { lightboxModal.style.display = 'none'; lightboxImg.src = ''; };
+
+    window.addEventListener('keydown', (e) => {
+      if (lightboxModal.style.display === 'flex') {
+        if (e.key === 'ArrowRight') btnNextPhoto.click();
+        if (e.key === 'ArrowLeft') btnPrevPhoto.click();
+        if (e.key === 'Escape') btnCloseLightbox.click();
+      }
+    });
+
+    // 4. CÂMERA BIOMÉTRICA (AWS REKOGNITION)
+    btnScanFace.onclick = async () => {
+      cameraModal.style.display = 'flex';
+      btnCapturePhoto.disabled = false;
+      btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 720 } } 
+        });
+        webcam.srcObject = stream;
+      } catch (err) {
+        alert('Permissão de câmera negada.');
+        cameraModal.style.display = 'none';
+      }
+    };
+
+    function closeCamera() {
+      cameraModal.style.display = 'none';
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
+    }
+
+    btnCloseCamera.onclick = closeCamera;
+
+    btnCapturePhoto.onclick = async () => {
+      btnCapturePhoto.disabled = true;
+      btnCapturePhoto.textContent = '⏳ Consultando AWS Rekognition...';
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = webcam.videoWidth || 640;
+        canvas.height = webcam.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+        const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+
+        const res = await fetch(LAMBDA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: eventoAtual.id,
+            image: base64Image
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.erro) {
+          alert(data.erro || 'Erro ao processar imagem.');
+          btnCapturePhoto.disabled = false;
+          btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
+          return;
+        }
+
+        closeCamera();
+
+        const matchedIds = data.matchedIds || [];
+        if (matchedIds.length > 0) {
+          matchedPhotoIds = new Set(matchedIds);
+          activeTabId = 'matched';
+          renderTabs();
+          setupGalleryView();
+          statusMessage.textContent = `✨ Encontramos ${matchedIds.length} foto(s) com o seu rosto!`;
+          btnResetFilter.style.display = 'inline-block';
+          btnDownloadAllMatched.style.display = 'inline-block';
+          btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${matchedIds.length})`;
+        } else {
+          alert('Não encontramos você nas fotos deste evento. Tente tirar a foto mais de perto e em um local bem iluminado.');
+          statusMessage.textContent = 'Nenhuma foto encontrada para este rosto.';
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Erro de conexão ao consultar a IA da Amazon.');
+        btnCapturePhoto.disabled = false;
+        btnCapturePhoto.textContent = '📸 Tirar Foto & Buscar';
+      }
+    };
+
+    // 5. Download ZIP das fotos encontradas
+    btnDownloadAllMatched.onclick = async () => {
+      if (!matchedPhotoIds || matchedPhotoIds.size === 0) return;
+      const photosToDownload = allPhotos.filter(p => matchedPhotoIds.has(p.id));
+      btnDownloadAllMatched.disabled = true;
+
+      try {
+        const zip = new JSZip();
+        let i = 0;
+        for (const photo of photosToDownload) {
+          i++;
+          btnDownloadAllMatched.textContent = `Baixando ${i}/${photosToDownload.length}...`;
+          const res = await fetch(photo.fullUrl);
+          const blob = await res.blob();
+          zip.file(`${photo.folderName}_${photo.name}.jpg`, blob);
+        }
+        btnDownloadAllMatched.textContent = 'Compactando .zip...';
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = `minhas_fotos_${eventoAtual.id}.zip`;
+        a.click();
+        btnDownloadAllMatched.textContent = '✔ Download Concluído!';
+        setTimeout(() => {
+          btnDownloadAllMatched.disabled = false;
+          btnDownloadAllMatched.textContent = `📦 Baixar Todas as Minhas Fotos (${photosToDownload.length})`;
+        }, 3000);
+      } catch (e) {
+        alert('Erro ao compactar fotos.');
+        btnDownloadAllMatched.disabled = false;
+      }
+    };
+
+    btnResetFilter.onclick = () => {
+      matchedPhotoIds = null;
+      activeTabId = FOLDERS[0].id;
+      btnResetFilter.style.display = 'none';
+      btnDownloadAllMatched.style.display = 'none';
+      renderTabs();
+      setupGalleryView();
+      statusMessage.textContent = 'Exibindo todas as fotos.';
+    };
+
+    // Inicializa a galeria
+    loadEventGallery();
+  </script>
+</body>
+</html>
