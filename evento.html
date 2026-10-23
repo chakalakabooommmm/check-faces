@@ -27,7 +27,7 @@
       padding: 20px;
     }
 
-    /* HEADER BANNER COM FOTO DE CAPA */
+    /* HEADER BANNER */
     header.header-banner {
       position: relative;
       max-width: 1200px;
@@ -44,7 +44,6 @@
       background-color: #27272a;
     }
 
-    /* Máscara escura para legibilidade */
     header.header-banner::before {
       content: '';
       position: absolute;
@@ -244,7 +243,6 @@
       display: none;
     }
 
-    /* Celular */
     @media (max-width: 600px) {
       body { padding: 10px 6px; }
       header.header-banner { padding: 30px 15px; border-radius: 14px; margin-bottom: 20px; }
@@ -361,7 +359,7 @@
     }
 
     .lightbox-actions {
-      margin-top: 12px;
+      margin-top: 10px;
       display: flex;
       align-items: center;
       gap: 16px;
@@ -426,7 +424,6 @@
 </head>
 <body>
 
-  <!-- HEADER COM FOTO DE CAPA DINÂMICA -->
   <header class="header-banner" id="headerBanner">
     <div class="header-content">
       <a href="./index.html" class="btn-back">← Voltar para Todos os Eventos</a>
@@ -455,7 +452,7 @@
   <main class="gallery-grid" id="galleryGrid"></main>
   <div id="scrollLoader">Carregando mais fotos...</div>
 
-  <!-- MODAL DE CÂMERA (AWS REKOGNITION) -->
+  <!-- MODAL DE CÂMERA -->
   <div class="modal-overlay" id="cameraModal">
     <div class="modal-content">
       <button class="btn-close" id="btnCloseCamera">&times;</button>
@@ -474,7 +471,7 @@
     </div>
   </div>
 
-  <!-- Modal Lightbox (Botão com download inteligente para iPhone/Android/PC) -->
+  <!-- Lightbox: Botão type="button" SEM link externo quebrado do Drive -->
   <div class="modal-overlay" id="lightboxModal">
     <button class="btn-close" id="btnCloseLightbox">&times;</button>
     <button class="nav-btn nav-btn-prev" id="btnPrevPhoto">&#10094;</button>
@@ -482,7 +479,7 @@
       <img id="lightboxImg" class="lightbox-img" src="" alt="Foto expandida">
       <div class="photo-filename" id="photoFileName"></div>
       <div class="lightbox-actions">
-        <button id="btnDownload" class="btn btn-primary">Baixar</button>
+        <button type="button" id="btnDownload" class="btn btn-primary">Baixar</button>
         <span class="photo-counter" id="photoCounter"></span>
       </div>
     </div>
@@ -607,8 +604,7 @@
           folderId: folderId,
           folderName: folderName,
           thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
-          fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`,
-          downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`
+          fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=s0`
         }));
       } catch (e) {
         return [];
@@ -689,7 +685,7 @@
       }
     });
 
-    // 3. Lightbox com Download Inteligente (Sem página em branco)
+    // 3. Lightbox
     function openLightbox(index) {
       currentPhotoIndex = index;
       updateLightboxDisplay();
@@ -706,22 +702,25 @@
       photoFileName.textContent = nomeSemExtensao;
     }
 
-    // BOTÃO DE DOWNLOAD DIRETO E NATIVO (IPHONE / ANDROID / PC)
+    // DOWNLOAD BLINDADO PARA IPHONE E COMPUTADORES
     btnDownload.onclick = async (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      if (currentFilteredPhotos.length === 0) return;
 
+      if (currentFilteredPhotos.length === 0) return;
       const photo = currentFilteredPhotos[currentPhotoIndex];
+
       btnDownload.disabled = true;
       btnDownload.textContent = '⏳ Baixando...';
 
       try {
+        // Baixa a imagem diretamente do CDN da foto em alta resolução
         const res = await fetch(photo.fullUrl);
         const blob = await res.blob();
         const nomeArquivo = photo.name || `foto_${photo.id}.jpg`;
 
-        // 1. NO IPHONE / CELULAR: Abre a gaveta para "Salvar Imagem" no Rolo da Câmera
-        const file = new File([blob], nomeArquivo, { type: blob.type || 'image/jpeg' });
+        // 1. IPHONE: Abre a gaveta de compartilhamento oficial para salvar no app "Fotos"
+        const file = new File([blob], nomeArquivo, { type: 'image/jpeg' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
@@ -732,7 +731,7 @@
           return;
         }
 
-        // 2. NO COMPUTADOR / ANDROID: Força o download limpo do arquivo
+        // 2. ANDROID / COMPUTADOR: Download direto do arquivo
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
@@ -749,8 +748,8 @@
         }, 1500);
 
       } catch (err) {
-        console.error('Falha no download via blob:', err);
-        // Fallback final: se o usuário cancelar o share ou der erro, abre a foto direta
+        console.warn('Fallback acionado:', err);
+        // Fallback: abre a imagem original pura em nova aba (lh3), sem passar pelo Drive quebrado!
         window.open(photo.fullUrl, '_blank');
         btnDownload.disabled = false;
         btnDownload.textContent = 'Baixar';
